@@ -16,7 +16,7 @@
     "typecheck": "bunx tsc --noEmit",
     "build": "bun build index.ts --compile --outfile dist/mikuru",
     "format": "oxfmt",
-    "lint": "oxlint"
+    "lint": "oxlint --deny-warnings"
   },
   "dependencies": {
     "valibot": "^1.4.1"

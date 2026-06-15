@@ -7,7 +7,7 @@ export async function mapConcurrent<T, R>(
     throw new Error("Concurrency must be a positive integer");
   }
 
-  const results = new Array<R>(items.length);
+  const results = Array.from<R>({ length: items.length });
   let nextIndex = 0;
 
   async function worker(): Promise<void> {
