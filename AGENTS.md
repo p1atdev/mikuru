@@ -1,8 +1,28 @@
----
-description: Use Bun instead of Node.js, npm, pnpm, or vite.
-globs: "*.ts, *.tsx, *.html, *.css, *.js, *.jsx, package.json"
-alwaysApply: false
----
+# Mikuru
+
+`sherlock-project/sherlock` の Bun 再実装。
+
+## 機能
+
+有力なサイトに絞って、アカウントの存在をチェックする。
+
+元の sherlock は最新のレスポンス形式に必ずしも追いついていないので、どのサイトが今ちゃんと対応できているのか把握できるように、サイトごとにテストを用意して把握できるようにする。
+
+元の sherlock と同様に、サイトごとに判定方法を設定できると良い。例えは、HEAD で十分な場合は HEAD ですまして、必要な場合は HTMLRewriter を使う感じにする。
+
+HTMLRewrite は癖が強いので、もし使う場合は適切なラッパーを用意すると良いと思う。
+
+最終的に、Codex のスキルとして呼び出せるようにしたい (`bun build` による single file) ので、JSON 形式などエージェントが読みやすい形での出力に対応して欲しい。
+
+対応するサイトやそれぞれの判定方法の記述は Yaml で行う。
+ベースラインは `https://github.com/sherlock-project/sherlock/blob/master/sherlock_project/resources/data.json` の JSON を使って良いが、100%信頼できる検証方法とは限らない。
+
+
+## 依存
+
+必要に応じて `bun add` で依存追加して良い。(サンドボックスの都合で拒否される可能性もあるが、権限申請すれば良い。)
+
+## Bun
 
 Default to using Bun instead of Node.js.
 
@@ -35,77 +55,3 @@ test("hello world", () => {
   expect(1).toBe(1);
 });
 ```
-
-## Frontend
-
-Use HTML imports with `Bun.serve()`. Don't use `vite`. HTML imports fully support React, CSS, Tailwind.
-
-Server:
-
-```ts#index.ts
-import index from "./index.html"
-
-Bun.serve({
-  routes: {
-    "/": index,
-    "/api/users/:id": {
-      GET: (req) => {
-        return new Response(JSON.stringify({ id: req.params.id }));
-      },
-    },
-  },
-  // optional websocket support
-  websocket: {
-    open: (ws) => {
-      ws.send("Hello, world!");
-    },
-    message: (ws, message) => {
-      ws.send(message);
-    },
-    close: (ws) => {
-      // handle close
-    }
-  },
-  development: {
-    hmr: true,
-    console: true,
-  }
-})
-```
-
-HTML files can import .tsx, .jsx or .js files directly and Bun's bundler will transpile & bundle automatically. `<link>` tags can point to stylesheets and Bun's CSS bundler will bundle.
-
-```html#index.html
-<html>
-  <body>
-    <h1>Hello, world!</h1>
-    <script type="module" src="./frontend.tsx"></script>
-  </body>
-</html>
-```
-
-With the following `frontend.tsx`:
-
-```tsx#frontend.tsx
-import React from "react";
-import { createRoot } from "react-dom/client";
-
-// import .css files directly and it works
-import './index.css';
-
-const root = createRoot(document.body);
-
-export default function Frontend() {
-  return <h1>Hello, world!</h1>;
-}
-
-root.render(<Frontend />);
-```
-
-Then, run index.ts
-
-```sh
-bun --hot ./index.ts
-```
-
-For more information, read the Bun API docs in `node_modules/bun-types/docs/**.mdx`.
