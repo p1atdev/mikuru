@@ -59,6 +59,9 @@ describe("manifest", () => {
         "discogs",
         "pastebin",
         "telegram",
+        "matrix-org",
+        "vk",
+        "qq-qzone",
       ]),
     );
   });

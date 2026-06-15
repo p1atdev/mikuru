@@ -1334,6 +1334,88 @@ sites:
       found: telegram
       notFoundTemplate: mk{random}
 
+  - id: matrix-org
+    name: Matrix.org
+    profileUrl: https://matrix.to/#/@{username}:matrix.org
+    username:
+      pattern: "^[a-z0-9._=+/-]+$"
+    request:
+      url: https://matrix.org/_matrix/client/v3/profile/%40{username}%3Amatrix.org
+      method: HEAD
+      headers:
+        accept: application/json
+    rules:
+      - result: found
+        reason: Matrix.org profile API found the user
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: Matrix.org profile API did not find the user
+        when:
+          all:
+            - type: status
+              in: [404]
+    test:
+      found: matthew
+      notFoundTemplate: mk{random}
+
+  - id: vk
+    name: VK
+    profileUrl: https://vk.com/{username}
+    username:
+      pattern: "^[a-zA-Z0-9_.]{1,32}$"
+    request:
+      method: GET
+    rules:
+      - result: found
+        reason: VK public address exists
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: VK public address was not found
+        when:
+          all:
+            - type: status
+              in: [404]
+    test:
+      found: durov
+      notFoundTemplate: mk{random}
+
+  - id: qq-qzone
+    name: QQ (Qzone)
+    profileUrl: https://user.qzone.qq.com/{username}
+    username:
+      pattern: "^[1-9][0-9]{4,11}$"
+    request:
+      method: GET
+    rules:
+      - result: not_found
+        reason: QQ number does not have a public Qzone
+        when:
+          all:
+            - type: html
+              selector: title
+              text:
+                equals: "404"
+      - result: found
+        reason: QQ number has a public Qzone
+        when:
+          all:
+            - type: status
+              in: [200]
+          not:
+            - type: html
+              selector: title
+              text:
+                equals: "404"
+    test:
+      found: "123456"
+      notFoundTemplate: "999999999999"
+
   - id: hacker-news
     name: Hacker News
     # Shared cloud IPs are frequently rate limited with HTTP 429.
