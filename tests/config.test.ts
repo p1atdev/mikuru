@@ -58,6 +58,7 @@ describe("manifest", () => {
         "anilist",
         "discogs",
         "pastebin",
+        "telegram",
       ]),
     );
   });

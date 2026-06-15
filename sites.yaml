@@ -1301,6 +1301,39 @@ sites:
       found: Pastebin
       notFoundTemplate: mk{random}
 
+  - id: telegram
+    name: Telegram
+    profileUrl: https://t.me/{username}
+    username:
+      pattern: "^[a-zA-Z0-9_]{5,32}$"
+    request:
+      # Telegram documents telegram.me as equivalent to t.me, and it is more
+      # reliable from shared cloud networks.
+      url: https://telegram.me/{username}
+      method: GET
+    rules:
+      - result: found
+        reason: Telegram resolved the public username
+        when:
+          all:
+            - type: status
+              in: [200]
+            - type: html
+              selector: .tgme_page_title
+              exists: true
+      - result: not_found
+        reason: Telegram did not resolve the public username
+        when:
+          all:
+            - type: status
+              in: [200]
+            - type: html
+              selector: .tgme_page_title
+              exists: false
+    test:
+      found: telegram
+      notFoundTemplate: mk{random}
+
   - id: hacker-news
     name: Hacker News
     # Shared cloud IPs are frequently rate limited with HTTP 429.
