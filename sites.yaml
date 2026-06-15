@@ -1416,6 +1416,30 @@ sites:
       found: "123456"
       notFoundTemplate: "999999999999"
 
+  - id: mixi2
+    name: mixi2
+    profileUrl: https://mixi.social/@{username}
+    username:
+      pattern: "^[a-zA-Z0-9_]{1,30}$"
+    request:
+      method: HEAD
+    rules:
+      - result: found
+        reason: mixi2 profile page exists
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: mixi2 profile page was not found
+        when:
+          all:
+            - type: status
+              in: [404]
+    test:
+      found: mixi2
+      notFoundTemplate: mk{random}
+
   - id: hacker-news
     name: Hacker News
     # Shared cloud IPs are frequently rate limited with HTTP 429.
