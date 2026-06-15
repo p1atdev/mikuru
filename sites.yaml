@@ -247,6 +247,50 @@ sites:
       found: ev
       notFoundTemplate: mikurucheck{random}
 
+  - id: zenn
+    name: Zenn
+    profileUrl: https://zenn.dev/{username}
+    request:
+      method: HEAD
+    rules:
+      - result: found
+        reason: Zenn profile page exists
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: Zenn profile page was not found
+        when:
+          all:
+            - type: status
+              in: [404]
+    test:
+      found: uhyo
+      notFoundTemplate: mikurucheck{random}
+
+  - id: note
+    name: note
+    profileUrl: https://note.com/{username}
+    request:
+      method: HEAD
+    rules:
+      - result: found
+        reason: note profile page exists
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: note profile page was not found
+        when:
+          all:
+            - type: status
+              in: [404]
+    test:
+      found: info
+      notFoundTemplate: mikurucheck{random}
+
   - id: soundcloud
     name: SoundCloud
     profileUrl: https://soundcloud.com/{username}
@@ -382,6 +426,578 @@ sites:
               exists: true
     test:
       found: xqc
+      notFoundTemplate: mikurucheck{random}
+
+  - id: qiita
+    name: Qiita
+    profileUrl: https://qiita.com/{username}
+    request:
+      url: https://qiita.com/api/v2/users/{username}
+      method: GET
+      headers:
+        accept: application/json
+    rules:
+      - result: found
+        reason: Qiita user API returned a profile
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: Qiita user API did not find the user
+        when:
+          all:
+            - type: status
+              in: [404]
+    test:
+      found: Qiita
+      notFoundTemplate: mikurucheck{random}
+
+  - id: dev
+    name: DEV
+    profileUrl: https://dev.to/{username}
+    request:
+      url: https://dev.to/api/users/by_username?url={username}
+      method: HEAD
+      headers:
+        accept: application/json
+    rules:
+      - result: found
+        reason: DEV user API returned a profile
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: DEV user API did not find the user
+        when:
+          all:
+            - type: status
+              in: [404]
+    test:
+      found: ben
+      notFoundTemplate: mikurucheck{random}
+
+  - id: codeberg
+    name: Codeberg
+    profileUrl: https://codeberg.org/{username}
+    request:
+      url: https://codeberg.org/api/v1/users/{username}
+      method: GET
+      headers:
+        accept: application/json
+    rules:
+      - result: found
+        reason: Codeberg user API returned a profile
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: Codeberg user API did not find the user
+        when:
+          all:
+            - type: status
+              in: [404]
+    test:
+      found: forgejo
+      notFoundTemplate: mikurucheck{random}
+
+  - id: hugging-face
+    name: Hugging Face
+    profileUrl: https://huggingface.co/{username}
+    request:
+      method: HEAD
+    rules:
+      - result: found
+        reason: Hugging Face profile page exists
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: Hugging Face profile page was not found
+        when:
+          all:
+            - type: status
+              in: [404]
+    test:
+      found: julien-c
+      notFoundTemplate: mikurucheck{random}
+
+  - id: atcoder
+    name: AtCoder
+    profileUrl: https://atcoder.jp/users/{username}
+    request:
+      method: HEAD
+    rules:
+      - result: found
+        reason: AtCoder profile page exists
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: AtCoder profile page was not found
+        when:
+          all:
+            - type: status
+              in: [404]
+    test:
+      found: chokudai
+      notFoundTemplate: mikurucheck{random}
+
+  - id: linktree
+    name: Linktree
+    profileUrl: https://linktr.ee/{username}
+    request:
+      method: HEAD
+    rules:
+      - result: found
+        reason: Linktree profile page exists
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: Linktree profile page was not found
+        when:
+          all:
+            - type: status
+              in: [404]
+    test:
+      found: linktree
+      notFoundTemplate: mikurucheck{random}
+
+  - id: behance
+    name: Behance
+    profileUrl: https://www.behance.net/{username}
+    request:
+      method: HEAD
+    rules:
+      - result: found
+        reason: Behance profile page exists
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: Behance profile page was not found
+        when:
+          all:
+            - type: status
+              in: [404]
+    test:
+      found: adobe
+      notFoundTemplate: mikurucheck{random}
+
+  - id: lichess
+    name: Lichess
+    profileUrl: https://lichess.org/@/{username}
+    request:
+      url: https://lichess.org/api/user/{username}
+      method: GET
+      headers:
+        accept: application/json
+    rules:
+      - result: found
+        reason: Lichess user API returned a profile
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: Lichess user API did not find the user
+        when:
+          all:
+            - type: status
+              in: [404]
+    test:
+      found: DrNykterstein
+      notFoundTemplate: mikurucheck{random}
+
+  - id: chess-com
+    name: Chess.com
+    profileUrl: https://www.chess.com/member/{username}
+    request:
+      method: HEAD
+    rules:
+      - result: found
+        reason: Chess.com profile page exists
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: Chess.com profile page was not found
+        when:
+          all:
+            - type: status
+              in: [404]
+    test:
+      found: hikaru
+      notFoundTemplate: mikurucheck{random}
+
+  - id: tumblr
+    name: Tumblr
+    profileUrl: https://{username}.tumblr.com/
+    request:
+      method: HEAD
+    rules:
+      - result: found
+        reason: Tumblr blog exists
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: Tumblr blog was not found
+        when:
+          all:
+            - type: status
+              in: [404]
+    test:
+      found: staff
+      notFoundTemplate: mikurucheck{random}
+
+  - id: codeforces
+    name: Codeforces
+    profileUrl: https://codeforces.com/profile/{username}
+    request:
+      url: https://codeforces.com/api/user.info?handles={username}
+      method: GET
+      headers:
+        accept: application/json
+    rules:
+      - result: found
+        reason: Codeforces user API returned a profile
+        when:
+          all:
+            - type: status
+              in: [200]
+            - type: json
+              path: [status]
+              equals: OK
+            - type: json
+              path: [result, 0, handle]
+              exists: true
+      - result: not_found
+        reason: Codeforces user API did not find the handle
+        when:
+          all:
+            - type: status
+              in: [400]
+            - type: json
+              path: [status]
+              equals: FAILED
+            - type: json
+              path: [comment]
+              includes: not found
+    test:
+      found: tourist
+      notFoundTemplate: mikurucheck{random}
+
+  - id: leetcode
+    name: LeetCode
+    profileUrl: https://leetcode.com/u/{username}/
+    request:
+      url: https://leetcode.com/graphql/
+      method: POST
+      headers:
+        accept: application/json
+      json:
+        query: "query userPublicProfile($username: String!) { matchedUser(username: $username) { username } }"
+        variables:
+          username: "{username}"
+    rules:
+      - result: found
+        reason: LeetCode GraphQL returned a profile
+        when:
+          all:
+            - type: status
+              in: [200]
+            - type: json
+              path: [data, matchedUser, username]
+              exists: true
+      - result: not_found
+        reason: LeetCode GraphQL reported a missing user
+        when:
+          all:
+            - type: status
+              in: [200]
+            - type: json
+              path: [data, matchedUser]
+              equals: null
+            - type: json
+              path: [errors, 0, message]
+              includes: does not exist
+    test:
+      found: lee215
+      notFoundTemplate: mikurucheck{random}
+
+  - id: dribbble
+    name: Dribbble
+    profileUrl: https://dribbble.com/{username}
+    request:
+      method: HEAD
+    rules:
+      - result: found
+        reason: Dribbble profile page exists
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: Dribbble profile page was not found
+        when:
+          all:
+            - type: status
+              in: [404]
+    test:
+      found: chriscoyier
+      notFoundTemplate: mikurucheck{random}
+
+  - id: vimeo
+    name: Vimeo
+    profileUrl: https://vimeo.com/{username}
+    request:
+      method: HEAD
+    rules:
+      - result: found
+        reason: Vimeo profile page exists
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: Vimeo profile page was not found
+        when:
+          all:
+            - type: status
+              in: [404]
+    test:
+      found: staff
+      notFoundTemplate: mikurucheck{random}
+
+  - id: product-hunt
+    name: Product Hunt
+    profileUrl: https://www.producthunt.com/@{username}
+    request:
+      method: HEAD
+    rules:
+      - result: found
+        reason: Product Hunt profile page exists
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: Product Hunt profile page was not found
+        when:
+          all:
+            - type: status
+              in: [404]
+    test:
+      found: rrhoover
+      notFoundTemplate: mikurucheck{random}
+
+  - id: gravatar
+    name: Gravatar
+    profileUrl: https://gravatar.com/{username}
+    request:
+      method: HEAD
+    rules:
+      - result: found
+        reason: Gravatar profile page exists
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: Gravatar profile page was not found
+        when:
+          all:
+            - type: status
+              in: [404]
+    test:
+      found: matt
+      notFoundTemplate: mikurucheck{random}
+
+  - id: patreon
+    name: Patreon
+    profileUrl: https://www.patreon.com/{username}
+    request:
+      method: HEAD
+    rules:
+      - result: found
+        reason: Patreon profile page exists
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: Patreon profile page was not found
+        when:
+          all:
+            - type: status
+              in: [404]
+    test:
+      found: patreon
+      notFoundTemplate: mikurucheck{random}
+
+  - id: rubygems
+    name: RubyGems
+    profileUrl: https://rubygems.org/profiles/{username}
+    request:
+      method: HEAD
+    rules:
+      - result: found
+        reason: RubyGems profile page exists
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: RubyGems profile page was not found
+        when:
+          all:
+            - type: status
+              in: [404]
+    test:
+      found: qrush
+      notFoundTemplate: mikurucheck{random}
+
+  - id: packagist
+    name: Packagist
+    profileUrl: https://packagist.org/users/{username}/
+    request:
+      method: HEAD
+      timeoutMs: 30000
+    rules:
+      - result: found
+        reason: Packagist profile page exists
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: Packagist profile page was not found
+        when:
+          all:
+            - type: status
+              in: [404]
+    test:
+      found: Seldaek
+      notFoundTemplate: mikurucheck{random}
+
+  - id: codepen
+    name: CodePen
+    profileUrl: https://codepen.io/{username}
+    request:
+      method: GET
+    rules:
+      - result: found
+        reason: CodePen profile page exists
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: CodePen profile page was not found
+        when:
+          all:
+            - type: status
+              in: [404]
+    test:
+      found: chriscoyier
+      notFoundTemplate: mikurucheck{random}
+
+  - id: sourcehut
+    name: SourceHut
+    profileUrl: https://sr.ht/~{username}/
+    request:
+      method: HEAD
+    rules:
+      - result: found
+        reason: SourceHut profile page exists
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: SourceHut profile page was not found
+        when:
+          all:
+            - type: status
+              in: [404]
+    test:
+      found: sircmpwn
+      notFoundTemplate: mikurucheck{random}
+
+  - id: itch-io
+    name: itch.io
+    profileUrl: https://{username}.itch.io/
+    request:
+      method: HEAD
+    rules:
+      - result: found
+        reason: itch.io creator page exists
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: itch.io creator page was not found
+        when:
+          all:
+            - type: status
+              in: [404]
+    test:
+      found: leafo
+      notFoundTemplate: mikurucheck{random}
+
+  - id: hatena
+    name: Hatena
+    profileUrl: https://profile.hatena.ne.jp/{username}/
+    request:
+      method: GET
+    rules:
+      - result: found
+        reason: Hatena profile page exists
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: Hatena profile page was not found
+        when:
+          all:
+            - type: status
+              in: [404]
+    test:
+      found: hatenablog
+      notFoundTemplate: mikurucheck{random}
+
+  - id: kaggle
+    name: Kaggle
+    profileUrl: https://www.kaggle.com/{username}
+    request:
+      method: GET
+    rules:
+      - result: found
+        reason: Kaggle profile page exists
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: Kaggle profile page was not found
+        when:
+          all:
+            - type: status
+              in: [404]
+    test:
+      found: benhamner
       notFoundTemplate: mikurucheck{random}
 
   - id: hacker-news

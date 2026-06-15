@@ -11,13 +11,14 @@ const parsed = parseArgs({
   options: {
     format: { type: "string", short: "f", default: "text" },
     site: { type: "string", short: "s", multiple: true },
-    timeout: { type: "string", default: "15000" },
+    timeout: { type: "string" },
     "include-disabled": { type: "boolean", default: false },
   },
 });
 
-const timeoutMs = Number(parsed.values.timeout);
-if (!Number.isInteger(timeoutMs) || timeoutMs < 1) {
+const timeoutOverride =
+  parsed.values.timeout === undefined ? undefined : Number(parsed.values.timeout);
+if (timeoutOverride !== undefined && (!Number.isInteger(timeoutOverride) || timeoutOverride < 1)) {
   throw new Error("--timeout must be a positive integer");
 }
 if (parsed.values.format !== "text" && parsed.values.format !== "json") {
@@ -50,6 +51,7 @@ const verifications: Verification[] = [];
 for (const site of sites) {
   const foundUsername = site.test!.found;
   const notFoundUsername = createMissingUsername(site);
+  const timeoutMs = timeoutOverride ?? Math.max(15_000, site.request.timeoutMs ?? 0);
   const [found, notFound] = await Promise.all([
     checkUsernameOnSite(foundUsername, site, manifest, { timeoutMs }),
     checkUsernameOnSite(notFoundUsername, site, manifest, { timeoutMs }),
