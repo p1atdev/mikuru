@@ -1,0 +1,49 @@
+import { describe, expect, test } from "bun:test";
+import { loadDefaultManifest } from "../src/config/default.ts";
+import { parseManifest } from "../src/config/load.ts";
+
+describe("manifest", () => {
+  test("loads the bundled site manifest", () => {
+    const manifest = loadDefaultManifest();
+
+    expect(manifest.version).toBe(1);
+    expect(manifest.sites.length).toBeGreaterThanOrEqual(5);
+    expect(manifest.sites.map((site) => site.id)).toContain("github");
+  });
+
+  test("rejects duplicate site ids", () => {
+    const site = {
+      id: "example",
+      name: "Example",
+      profileUrl: "https://example.com/{username}",
+      request: {},
+      rules: [
+        {
+          result: "found",
+          when: { all: [{ type: "status", in: [200] }] },
+        },
+      ],
+    };
+
+    expect(() =>
+      parseManifest({ version: 1, sites: [site, site] }),
+    ).toThrow("Duplicate site id");
+  });
+
+  test("rejects rules without conditions", () => {
+    expect(() =>
+      parseManifest({
+        version: 1,
+        sites: [
+          {
+            id: "example",
+            name: "Example",
+            profileUrl: "https://example.com/{username}",
+            request: {},
+            rules: [{ result: "found", when: {} }],
+          },
+        ],
+      }),
+    ).toThrow("has no conditions");
+  });
+});

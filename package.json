@@ -3,8 +3,24 @@
   "module": "index.ts",
   "type": "module",
   "private": true,
+  "version": "0.1.0",
+  "bin": {
+    "mikuru": "./dist/mikuru"
+  },
+  "scripts": {
+    "start": "bun index.ts",
+    "test": "bun test",
+    "test:live": "MIKURU_LIVE=1 bun test tests/live-sites.test.ts",
+    "verify-sites": "bun scripts/verify-sites.ts",
+    "import:sherlock": "bun scripts/import-sherlock.ts",
+    "typecheck": "bunx tsc --noEmit",
+    "build": "bun build index.ts --compile --outfile dist/mikuru"
+  },
   "devDependencies": {
     "@types/bun": "latest"
+  },
+  "dependencies": {
+    "valibot": "^1.4.1"
   },
   "peerDependencies": {
     "typescript": "^5"

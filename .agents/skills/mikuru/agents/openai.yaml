@@ -1,0 +1,4 @@
+interface:
+  display_name: "Mikuru Username Check"
+  short_description: "Check username presence across selected sites"
+  default_prompt: "Use $mikuru to check where this username has an account."

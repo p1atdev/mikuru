@@ -1,0 +1,148 @@
+version: 1
+
+defaults:
+  concurrency: 8
+  timeoutMs: 10000
+  blockedStatuses: [403, 429]
+
+sites:
+  - id: github
+    name: GitHub
+    profileUrl: https://github.com/{username}
+    username:
+      pattern: '^[a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9])){0,38}$'
+    request:
+      method: HEAD
+    rules:
+      - result: found
+        reason: Profile returned a successful status
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: Profile was not found
+        when:
+          all:
+            - type: status
+              in: [404]
+    test:
+      found: sherlock-project
+      notFoundTemplate: mikuru-check-{random}
+
+  - id: gitlab
+    name: GitLab
+    profileUrl: https://gitlab.com/{username}
+    request:
+      url: https://gitlab.com/api/v4/users?username={username}
+      method: GET
+      headers:
+        accept: application/json
+    rules:
+      - result: not_found
+        reason: API returned an empty user list
+        when:
+          all:
+            - type: json
+              path: []
+              equals: []
+      - result: found
+        reason: API returned at least one user
+        when:
+          all:
+            - type: status
+              in: [200]
+          not:
+            - type: json
+              path: []
+              equals: []
+    test:
+      found: gitlab
+      notFoundTemplate: mikuru-check-{random}
+
+  - id: docker-hub
+    name: Docker Hub
+    profileUrl: https://hub.docker.com/u/{username}
+    username:
+      pattern: '^[a-z0-9][a-z0-9_-]{1,29}$'
+    request:
+      url: https://hub.docker.com/v2/users/{username}/
+      method: HEAD
+      headers:
+        accept: application/json
+    rules:
+      - result: found
+        reason: Docker Hub user endpoint exists
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: Docker Hub user endpoint was not found
+        when:
+          all:
+            - type: status
+              in: [404]
+    test:
+      found: docker
+      notFoundTemplate: mikuru-check-{random}
+
+  - id: bluesky
+    name: Bluesky
+    profileUrl: https://bsky.app/profile/{username}.bsky.social
+    username:
+      pattern: '^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$'
+    request:
+      url: https://public.api.bsky.app/xrpc/app.bsky.actor.getProfile?actor={username}.bsky.social
+      method: GET
+      headers:
+        accept: application/json
+    rules:
+      - result: found
+        reason: Bluesky profile API returned a profile
+        when:
+          all:
+            - type: status
+              in: [200]
+            - type: json
+              path: [handle]
+              exists: true
+      - result: not_found
+        reason: Bluesky profile API reported an unknown actor
+        when:
+          all:
+            - type: status
+              in: [400, 404]
+            - type: json
+              path: [message]
+              includes: Profile not found
+    test:
+      found: mcuban
+      notFoundTemplate: mikuru-check-{random}
+
+  - id: hacker-news
+    name: Hacker News
+    # Shared cloud IPs are frequently rate limited with HTTP 429.
+    enabled: false
+    profileUrl: https://news.ycombinator.com/user?id={username}
+    request:
+      method: GET
+    rules:
+      - result: not_found
+        reason: Hacker News returned its missing-user message
+        when:
+          all:
+            - type: body
+              includes: No such user.
+      - result: found
+        reason: Hacker News returned a user page
+        when:
+          all:
+            - type: status
+              in: [200]
+          not:
+            - type: body
+              includes: No such user.
+    test:
+      found: pg
+      notFoundTemplate: mikurucheck{random}
