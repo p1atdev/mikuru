@@ -1,21 +1,13 @@
 import { responseNeedsBody } from "./evaluate.ts";
-import {
-  interpolateTemplate,
-  interpolateTextTemplate,
-  interpolateValue,
-} from "./template.ts";
-import type {
-  LoadedManifest,
-  ProbeResponse,
-  RedirectMode,
-  SiteConfig,
-} from "../types.ts";
+import { interpolateTemplate, interpolateTextTemplate, interpolateValue } from "./template.ts";
+import type { LoadedManifest, ProbeResponse, RedirectMode, SiteConfig } from "../types.ts";
 
 export interface PreparedRequest {
   profileUrl: string;
   probeUrl: string;
   method: "GET" | "HEAD" | "POST" | "PUT";
   redirects: RedirectMode;
+  readBody: boolean;
   timeoutMs: number;
   headers: Headers;
   body?: string;
@@ -38,10 +30,7 @@ export function prepareRequest(
       Object.entries({
         ...manifest.defaults.headers,
         ...site.request.headers,
-      }).map(([name, value]) => [
-        name,
-        interpolateTextTemplate(value, username),
-      ]),
+      }).map(([name, value]) => [name, interpolateTextTemplate(value, username)]),
     ),
   );
 
@@ -55,22 +44,17 @@ export function prepareRequest(
 
   return {
     profileUrl: interpolateTemplate(site.profileUrl, username),
-    probeUrl: interpolateTemplate(
-      site.request.url ?? site.profileUrl,
-      username,
-    ),
+    probeUrl: interpolateTemplate(site.request.url ?? site.profileUrl, username),
     method,
     redirects: site.request.redirects ?? "follow",
-    timeoutMs:
-      timeoutOverride ?? site.request.timeoutMs ?? manifest.defaults.timeoutMs,
+    readBody: needsBody,
+    timeoutMs: timeoutOverride ?? site.request.timeoutMs ?? manifest.defaults.timeoutMs,
     headers,
     body,
   };
 }
 
-export async function executeRequest(
-  request: PreparedRequest,
-): Promise<ProbeResponse> {
+export async function executeRequest(request: PreparedRequest): Promise<ProbeResponse> {
   const startedAt = performance.now();
   const response = await fetch(request.probeUrl, {
     method: request.method,
@@ -80,8 +64,12 @@ export async function executeRequest(
     signal: AbortSignal.timeout(request.timeoutMs),
   });
 
-  const body =
-    request.method === "HEAD" ? undefined : await response.text();
+  let body: string | undefined;
+  if (request.method !== "HEAD" && request.readBody) {
+    body = await response.text();
+  } else {
+    await response.body?.cancel();
+  }
 
   return {
     status: response.status,

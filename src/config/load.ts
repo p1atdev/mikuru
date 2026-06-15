@@ -1,16 +1,9 @@
 import * as v from "valibot";
 import { manifestSchema } from "./schema.ts";
-import type {
-  Condition,
-  LoadedManifest,
-  Manifest,
-  SiteConfig,
-  StringMatcher,
-} from "../types.ts";
+import type { Condition, LoadedManifest, Manifest, SiteConfig, StringMatcher } from "../types.ts";
 
 const DEFAULT_HEADERS = {
-  "user-agent":
-    "Mozilla/5.0 (X11; Linux x86_64; rv:129.0) Gecko/20100101 Firefox/129.0 Mikuru/0.1",
+  "user-agent": "Mozilla/5.0 (X11; Linux x86_64; rv:129.0) Gecko/20100101 Firefox/129.0 Mikuru/0.1",
   accept: "text/html,application/json;q=0.9,*/*;q=0.8",
 };
 
@@ -97,11 +90,7 @@ function validateManifestSemantics(manifest: Manifest): void {
   }
 }
 
-function validateUrlTemplate(
-  template: string,
-  site: SiteConfig,
-  field: string,
-): void {
+function validateUrlTemplate(template: string, site: SiteConfig, field: string): void {
   try {
     new URL(template.replaceAll("{username}", "example"));
   } catch {
@@ -128,10 +117,7 @@ function validateCondition(condition: Condition, path: string): void {
       if (condition.in === undefined && condition.between === undefined) {
         throw new Error(`${path}.status must define in or between`);
       }
-      if (
-        condition.between !== undefined &&
-        condition.between[0] > condition.between[1]
-      ) {
+      if (condition.between !== undefined && condition.between[0] > condition.between[1]) {
         throw new Error(`${path}.status.between must be ordered`);
       }
       return;
@@ -163,10 +149,7 @@ function validateCondition(condition: Condition, path: string): void {
         validateStringMatcher(condition.text, `${path}.html.text`);
       }
       if (condition.attribute?.value) {
-        validateStringMatcher(
-          condition.attribute.value,
-          `${path}.html.attribute.value`,
-        );
+        validateStringMatcher(condition.attribute.value, `${path}.html.attribute.value`);
       }
       return;
   }

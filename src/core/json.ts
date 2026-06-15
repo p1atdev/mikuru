@@ -3,10 +3,7 @@ export interface JsonPathResult {
   value: unknown;
 }
 
-export function getJsonPath(
-  root: unknown,
-  path: Array<string | number>,
-): JsonPathResult {
+export function getJsonPath(root: unknown, path: Array<string | number>): JsonPathResult {
   let current = root;
 
   for (const segment of path) {

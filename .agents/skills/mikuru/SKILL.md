@@ -1,45 +1,39 @@
 ---
 name: mikuru
-description: Check whether one or more usernames have accounts on Mikuru's curated sites and return machine-readable evidence. Use when a user asks to search for a username, find matching social profiles, check username availability, or run Mikuru against selected sites.
+description: Check whether one or more usernames have public accounts across Mikuru's curated services. Use when a user asks to search for a username, find matching social profiles, investigate username reuse, or check selected services. The bundled launcher fetches and builds Mikuru from GitHub, so no local Mikuru checkout is required.
 ---
 
 # Mikuru
 
-Run the Mikuru CLI from the repository root, which is `../../..` relative to
-the directory containing this `SKILL.md`.
+Use the bundled `scripts/mikuru` launcher. Do not assume the current working
+directory contains the Mikuru repository.
 
-## Workflow
+## Run
 
-1. Use only usernames supplied by the user. Generate variants only when asked.
-2. Build the single-file executable if `dist/mikuru` is missing or the source
-   tree has changed:
-
-   ```bash
-   bun run build
-   ```
-
-3. Run checks with JSON output. By default, `results` contains found accounts
-   only:
+1. Resolve `SKILL_DIR` as the directory containing this `SKILL.md`.
+2. Run the launcher with Bash and JSON output:
 
    ```bash
-   ./dist/mikuru --format json <username>
+   bash "$SKILL_DIR/scripts/mikuru" --format json <username>
    ```
 
-   Pass multiple usernames as positionals. Limit sites by repeating
-   `--site <id-or-name>`.
+   The launcher clones or updates `https://github.com/p1atdev/mikuru.git` in
+   a temporary cache, installs locked dependencies, builds the executable, and
+   then forwards all arguments. Network access is required on the first run
+   and when checking for updates.
 
-   Add `--all` only when diagnostics or complete site-by-site results are
+3. Pass multiple usernames as positionals. Limit services by repeating
+   `--site <id-or-name>`. Add `--all` only when complete diagnostics are
    needed.
 
-4. Parse the JSON and report the useful evidence concisely:
-   - `found`: the site currently provides positive account evidence.
-   - `not_found`: the configured missing-account signal matched.
-   - `invalid`: the username is not valid for that site.
-   - `blocked`, `unknown`, `error`: inconclusive; do not report these as
-     found or not found.
+## Interpret
 
-5. Include `profileUrl` for found results. State that matching usernames do
-   not prove that the same person controls the accounts.
+- Report `found` results with `profileUrl`.
+- Treat `not_found` as no matching account, not proof that registration is
+  available.
+- Treat `invalid`, `blocked`, `unknown`, and `error` as inconclusive or
+  non-matching. Never report them as found.
+- State that matching usernames do not prove common ownership.
 
-For site-definition maintenance, run `bun run verify-sites --format json`.
-Treat its nonzero exit as a real site-health failure and inspect each status.
+If the launcher reports that Git or Bun is missing, explain that prerequisite
+instead of attempting an unrelated fallback.

@@ -27,9 +27,7 @@ export function responseNeedsBody(rules: Rule[]): boolean {
   return rules.some((rule) =>
     groupConditions(rule.when).some(
       (condition) =>
-        condition.type === "body" ||
-        condition.type === "json" ||
-        condition.type === "html",
+        condition.type === "body" || condition.type === "json" || condition.type === "html",
     ),
   );
 }
@@ -76,16 +74,12 @@ function matchesGroup(group: ConditionGroup, context: EvaluationContext): boolea
 
   return (
     all.every((condition) => matchesCondition(condition, context)) &&
-    (any.length === 0 ||
-      any.some((condition) => matchesCondition(condition, context))) &&
+    (any.length === 0 || any.some((condition) => matchesCondition(condition, context))) &&
     not.every((condition) => !matchesCondition(condition, context))
   );
 }
 
-function matchesCondition(
-  condition: Condition,
-  context: EvaluationContext,
-): boolean {
+function matchesCondition(condition: Condition, context: EvaluationContext): boolean {
   switch (condition.type) {
     case "status":
       return (
@@ -97,15 +91,9 @@ function matchesCondition(
     case "url":
       return matchesString(context.response.url, condition);
     case "header":
-      return matchesString(
-        context.response.headers.get(condition.name) ?? "",
-        condition,
-      );
+      return matchesString(context.response.headers.get(condition.name) ?? "", condition);
     case "body":
-      return (
-        context.response.body !== undefined &&
-        matchesString(context.response.body, condition)
-      );
+      return context.response.body !== undefined && matchesString(context.response.body, condition);
     case "json":
       return matchesJson(condition, context);
     case "html":
@@ -133,19 +121,13 @@ function matchesJson(
   if (condition.equals !== undefined && !deepEqual(selected.value, condition.equals)) {
     return false;
   }
-  if (
-    condition.includes !== undefined &&
-    !String(selected.value).includes(condition.includes)
-  ) {
+  if (condition.includes !== undefined && !String(selected.value).includes(condition.includes)) {
     return false;
   }
   return true;
 }
 
-function matchesHtml(
-  condition: HtmlCondition,
-  context: EvaluationContext,
-): boolean {
+function matchesHtml(condition: HtmlCondition, context: EvaluationContext): boolean {
   if (context.response.body === undefined) {
     return false;
   }
@@ -162,7 +144,7 @@ function matchesHtml(
   }
 
   if (condition.exists !== undefined) {
-    if ((inspection.count > 0) !== condition.exists) {
+    if (inspection.count > 0 !== condition.exists) {
       return false;
     }
   }
@@ -176,8 +158,7 @@ function matchesHtml(
     if (
       condition.attribute.value &&
       !inspection.attributes.some(
-        (value) =>
-          value !== null && matchesString(value, condition.attribute!.value!),
+        (value) => value !== null && matchesString(value, condition.attribute!.value!),
       )
     ) {
       return false;
@@ -189,20 +170,14 @@ function matchesHtml(
 function matchesString(value: string, matcher: StringMatcher): boolean {
   const caseSensitive = matcher.caseSensitive ?? true;
   const normalizedValue = caseSensitive ? value : value.toLocaleLowerCase();
-  const normalize = (input: string) =>
-    caseSensitive ? input : input.toLocaleLowerCase();
+  const normalize = (input: string) => (caseSensitive ? input : input.toLocaleLowerCase());
 
-  if (
-    matcher.equals !== undefined &&
-    normalizedValue !== normalize(matcher.equals)
-  ) {
+  if (matcher.equals !== undefined && normalizedValue !== normalize(matcher.equals)) {
     return false;
   }
 
   if (matcher.includes !== undefined) {
-    const needles = Array.isArray(matcher.includes)
-      ? matcher.includes
-      : [matcher.includes];
+    const needles = Array.isArray(matcher.includes) ? matcher.includes : [matcher.includes];
     if (!needles.some((needle) => normalizedValue.includes(normalize(needle)))) {
       return false;
     }

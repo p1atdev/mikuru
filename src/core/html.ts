@@ -6,10 +6,7 @@ export interface HtmlInspection {
   attributes: Array<string | null>;
 }
 
-export function inspectHtml(
-  html: string,
-  condition: HtmlCondition,
-): HtmlInspection {
+export function inspectHtml(html: string, condition: HtmlCondition): HtmlInspection {
   let count = 0;
   let text = "";
   const attributes: Array<string | null> = [];

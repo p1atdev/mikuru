@@ -1,9 +1,5 @@
 import { expect, test } from "bun:test";
-import {
-  createReport,
-  formatJsonLines,
-  formatText,
-} from "../src/output.ts";
+import { createReport, formatJsonLines, formatText } from "../src/output.ts";
 import type { CheckResult } from "../src/types.ts";
 
 const result: CheckResult = {

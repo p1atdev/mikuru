@@ -10,7 +10,7 @@ sites:
     name: GitHub
     profileUrl: https://github.com/{username}
     username:
-      pattern: '^[a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9])){0,38}$'
+      pattern: "^[a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9])){0,38}$"
     request:
       method: HEAD
     rules:
@@ -64,7 +64,7 @@ sites:
     name: Docker Hub
     profileUrl: https://hub.docker.com/u/{username}
     username:
-      pattern: '^[a-z0-9][a-z0-9_-]{1,29}$'
+      pattern: "^[a-z0-9][a-z0-9_-]{1,29}$"
     request:
       url: https://hub.docker.com/v2/users/{username}/
       method: HEAD
@@ -91,7 +91,7 @@ sites:
     name: Bluesky
     profileUrl: https://bsky.app/profile/{username}.bsky.social
     username:
-      pattern: '^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$'
+      pattern: "^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$"
     request:
       url: https://public.api.bsky.app/xrpc/app.bsky.actor.getProfile?actor={username}.bsky.social
       method: GET
@@ -119,6 +119,270 @@ sites:
     test:
       found: mcuban
       notFoundTemplate: mikuru-check-{random}
+
+  - id: instagram
+    name: Instagram
+    profileUrl: https://www.instagram.com/{username}/
+    username:
+      pattern: "^[a-zA-Z0-9._]{1,30}$"
+    request:
+      url: https://www.instagram.com/api/v1/users/web_profile_info/?username={username}
+      method: GET
+      headers:
+        accept: application/json
+        x-ig-app-id: "936619743392459"
+    rules:
+      - result: found
+        reason: Instagram web profile API returned a user
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: Instagram web profile API did not find the user
+        when:
+          all:
+            - type: status
+              in: [404]
+    test:
+      found: instagram
+      notFoundTemplate: mikurucheck{random}
+
+  - id: twitter
+    name: X (Twitter)
+    profileUrl: https://x.com/{username}
+    username:
+      pattern: "^[a-zA-Z0-9_]{1,15}$"
+    request:
+      url: https://publish.x.com/oembed?url=https://x.com/{username}
+      method: GET
+      headers:
+        accept: application/json
+    rules:
+      - result: found
+        reason: X official oEmbed endpoint resolved the profile
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: X official oEmbed endpoint did not find the profile
+        when:
+          all:
+            - type: status
+              in: [404]
+    test:
+      found: jack
+      notFoundTemplate: mk{random}
+
+  - id: youtube
+    name: YouTube
+    profileUrl: https://www.youtube.com/@{username}
+    request:
+      method: HEAD
+    rules:
+      - result: found
+        reason: YouTube handle page exists
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: YouTube handle page was not found
+        when:
+          all:
+            - type: status
+              in: [404]
+    test:
+      found: youtube
+      notFoundTemplate: mikurucheck{random}
+
+  - id: pinterest
+    name: Pinterest
+    profileUrl: https://www.pinterest.com/{username}/
+    username:
+      pattern: "^[a-zA-Z0-9_]{3,30}$"
+    request:
+      url: https://www.pinterest.com/oembed.json?url=https://www.pinterest.com/{username}/
+      method: HEAD
+      headers:
+        accept: application/json
+    rules:
+      - result: found
+        reason: Pinterest oEmbed endpoint resolved the profile
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: Pinterest oEmbed endpoint rejected the profile URL
+        when:
+          all:
+            - type: status
+              in: [400, 404]
+    test:
+      found: pinterest
+      notFoundTemplate: mikurucheck{random}
+
+  - id: medium
+    name: Medium
+    profileUrl: https://medium.com/@{username}
+    request:
+      url: https://medium.com/feed/@{username}
+      method: HEAD
+    rules:
+      - result: found
+        reason: Medium profile feed exists
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: Medium profile feed was not found
+        when:
+          all:
+            - type: status
+              in: [404]
+    test:
+      found: ev
+      notFoundTemplate: mikurucheck{random}
+
+  - id: soundcloud
+    name: SoundCloud
+    profileUrl: https://soundcloud.com/{username}
+    request:
+      method: HEAD
+    rules:
+      - result: found
+        reason: SoundCloud profile page exists
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: SoundCloud profile page was not found
+        when:
+          all:
+            - type: status
+              in: [404]
+    test:
+      found: soundcloud
+      notFoundTemplate: mikurucheck{random}
+
+  - id: threads
+    name: Threads
+    profileUrl: https://www.threads.com/@{username}
+    username:
+      pattern: "^[a-zA-Z0-9._]{1,30}$"
+    request:
+      method: GET
+      redirects: follow
+      headers:
+        sec-fetch-mode: navigate
+    rules:
+      - result: not_found
+        reason: Threads redirected the missing profile to login
+        when:
+          all:
+            - type: url
+              includes: /login/
+      - result: found
+        reason: Threads resolved the public profile
+        when:
+          all:
+            - type: status
+              in: [200]
+          not:
+            - type: url
+              includes: /login/
+    test:
+      found: zuck
+      notFoundTemplate: mikurucheck{random}
+
+  - id: steam
+    name: Steam
+    profileUrl: https://steamcommunity.com/id/{username}/
+    request:
+      method: GET
+    rules:
+      - result: not_found
+        reason: Steam returned its profile error page
+        when:
+          all:
+            - type: html
+              selector: title
+              text:
+                includes: "Steam Community :: Error"
+      - result: found
+        reason: Steam returned a community profile
+        when:
+          all:
+            - type: status
+              in: [200]
+          not:
+            - type: html
+              selector: title
+              text:
+                includes: "Steam Community :: Error"
+    test:
+      found: gabe
+      notFoundTemplate: mikurucheck{random}
+
+  - id: npm
+    name: npm
+    profileUrl: https://www.npmjs.com/~{username}
+    request:
+      method: HEAD
+    rules:
+      - result: found
+        reason: npm profile page exists
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: npm profile page was not found
+        when:
+          all:
+            - type: status
+              in: [404]
+    test:
+      found: sindresorhus
+      notFoundTemplate: mikurucheck{random}
+
+  - id: twitch
+    name: Twitch
+    profileUrl: https://www.twitch.tv/{username}
+    username:
+      pattern: "^[a-zA-Z0-9_]{3,25}$"
+    request:
+      url: https://gql.twitch.tv/gql
+      method: POST
+      headers:
+        accept: application/json
+        client-id: kimne78kx3ncx6brgo4mv6wki5h1ko
+      json:
+        query: "query($login: String!) { user(login: $login) { id login displayName } }"
+        variables:
+          login: "{username}"
+    rules:
+      - result: not_found
+        reason: Twitch GraphQL returned a null user
+        when:
+          all:
+            - type: json
+              path: [data, user]
+              equals: null
+      - result: found
+        reason: Twitch GraphQL returned a user id
+        when:
+          all:
+            - type: json
+              path: [data, user, id]
+              exists: true
+    test:
+      found: xqc
+      notFoundTemplate: mikurucheck{random}
 
   - id: hacker-news
     name: Hacker News

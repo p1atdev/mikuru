@@ -25,9 +25,7 @@ if (parsed.values.format !== "text" && parsed.values.format !== "json") {
 }
 
 const manifest = loadDefaultManifest();
-const requested = new Set(
-  (parsed.values.site ?? []).map((value) => value.toLocaleLowerCase()),
-);
+const requested = new Set((parsed.values.site ?? []).map((value) => value.toLocaleLowerCase()));
 const sites = manifest.sites.filter(
   (site) =>
     site.test &&
@@ -89,8 +87,5 @@ if (!report.passed) {
 
 function createMissingUsername(site: SiteConfig): string {
   const random = crypto.randomUUID().replaceAll("-", "").slice(0, 12);
-  return (site.test?.notFoundTemplate ?? `mikuru-${random}`).replaceAll(
-    "{random}",
-    random,
-  );
+  return (site.test?.notFoundTemplate ?? `mikuru-${random}`).replaceAll("{random}", random);
 }

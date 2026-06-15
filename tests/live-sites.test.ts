@@ -11,12 +11,9 @@ for (const site of manifest.sites) {
   }
 
   liveTest(`${site.name} recognizes a known username`, async () => {
-    const result = await checkUsernameOnSite(
-      site.test!.found,
-      site,
-      manifest,
-      { timeoutMs: 15_000 },
-    );
+    const result = await checkUsernameOnSite(site.test!.found, site, manifest, {
+      timeoutMs: 15_000,
+    });
     expect(result.status).toBe("found");
   });
 }

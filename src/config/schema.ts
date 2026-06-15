@@ -4,10 +4,7 @@ import type { Manifest } from "../types.ts";
 const nonEmptyString = v.pipe(v.string(), v.nonEmpty());
 const positiveInteger = v.pipe(v.number(), v.integer(), v.minValue(1));
 const statusCode = v.pipe(v.number(), v.integer(), v.minValue(100), v.maxValue(599));
-const stringOrStrings = v.union([
-  nonEmptyString,
-  v.pipe(v.array(nonEmptyString), v.nonEmpty()),
-]);
+const stringOrStrings = v.union([nonEmptyString, v.pipe(v.array(nonEmptyString), v.nonEmpty())]);
 
 const stringMatcherEntries = {
   equals: v.optional(v.string()),

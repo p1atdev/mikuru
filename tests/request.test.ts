@@ -81,12 +81,9 @@ describe("site checks", () => {
       ],
     });
 
-    const result = await checkUsernameOnSite(
-      "alice",
-      timeoutManifest.sites[0]!,
-      timeoutManifest,
-      { timeoutMs: 10 },
-    );
+    const result = await checkUsernameOnSite("alice", timeoutManifest.sites[0]!, timeoutManifest, {
+      timeoutMs: 10,
+    });
 
     expect(result.status).toBe("error");
     expect(result.error).toContain("timed out");
@@ -119,11 +116,7 @@ describe("site checks", () => {
       ],
     });
 
-    const result = await checkUsernameOnSite(
-      "alice",
-      redirectManifest.sites[0]!,
-      redirectManifest,
-    );
+    const result = await checkUsernameOnSite("alice", redirectManifest.sites[0]!, redirectManifest);
 
     expect(result.status).toBe("found");
   });
@@ -152,13 +145,10 @@ describe("site checks", () => {
       ],
     });
 
-    const request = prepareRequest(
-      "alice smith",
-      apiManifest.sites[0]!,
-      apiManifest,
-    );
+    const request = prepareRequest("alice smith", apiManifest.sites[0]!, apiManifest);
 
     expect(request.probeUrl).toBe("https://api.example.com/check");
+    expect(request.readBody).toBeFalse();
     expect(request.headers.get("x-username")).toBe("alice smith");
     expect(request.body).toBe('{"username":"alice smith"}');
   });
@@ -174,14 +164,9 @@ function startTestServer(): ReturnType<typeof Bun.serve> {
         port: 20_000 + Math.floor(Math.random() * 20_000),
         routes: {
           "/users/alice": () =>
-            Response.json(
-              { user: { name: "Alice" } },
-              { headers: { "x-profile": "yes" } },
-            ),
-          "/users/missing": () =>
-            Response.json({ error: "not found" }, { status: 404 }),
-          "/redirect/alice": () =>
-            Response.redirect(`${server.url}users/alice`, 302),
+            Response.json({ user: { name: "Alice" } }, { headers: { "x-profile": "yes" } }),
+          "/users/missing": () => Response.json({ error: "not found" }, { status: 404 }),
+          "/redirect/alice": () => Response.redirect(`${server.url}users/alice`, 302),
           "/slow": async () => {
             await Bun.sleep(100);
             return new Response("slow");

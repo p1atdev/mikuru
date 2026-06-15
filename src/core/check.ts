@@ -1,12 +1,7 @@
 import { mapConcurrent } from "./concurrency.ts";
 import { evaluateResponse } from "./evaluate.ts";
 import { executeRequest, prepareRequest } from "./request.ts";
-import type {
-  CheckOptions,
-  CheckResult,
-  LoadedManifest,
-  SiteConfig,
-} from "../types.ts";
+import type { CheckOptions, CheckResult, LoadedManifest, SiteConfig } from "../types.ts";
 
 export async function checkUsernameOnSite(
   username: string,
@@ -16,10 +11,7 @@ export async function checkUsernameOnSite(
 ): Promise<CheckResult> {
   const checkedAt = new Date().toISOString();
   const startedAt = performance.now();
-  const profileUrl = site.profileUrl.replaceAll(
-    "{username}",
-    encodeURIComponent(username),
-  );
+  const profileUrl = site.profileUrl.replaceAll("{username}", encodeURIComponent(username));
 
   if (site.username?.pattern && !new RegExp(site.username.pattern).test(username)) {
     return {
@@ -73,15 +65,12 @@ export async function checkUsernames(
   manifest: LoadedManifest,
   options: CheckOptions & { concurrency?: number } = {},
 ): Promise<CheckResult[]> {
-  const jobs = usernames.flatMap((username) =>
-    sites.map((site) => ({ username, site })),
-  );
+  const jobs = usernames.flatMap((username) => sites.map((site) => ({ username, site })));
 
   return mapConcurrent(
     jobs,
     options.concurrency ?? manifest.defaults.concurrency,
-    ({ username, site }) =>
-      checkUsernameOnSite(username, site, manifest, options),
+    ({ username, site }) => checkUsernameOnSite(username, site, manifest, options),
   );
 }
 

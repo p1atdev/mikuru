@@ -1,15 +1,6 @@
-export type AccountStatus =
-  | "found"
-  | "not_found"
-  | "invalid"
-  | "blocked"
-  | "unknown"
-  | "error";
+export type AccountStatus = "found" | "not_found" | "invalid" | "blocked" | "unknown" | "error";
 
-export type RuleResult = Extract<
-  AccountStatus,
-  "found" | "not_found" | "blocked" | "unknown"
->;
+export type RuleResult = Extract<AccountStatus, "found" | "not_found" | "blocked" | "unknown">;
 
 export type HttpMethod = "GET" | "HEAD" | "POST" | "PUT";
 export type RedirectMode = "follow" | "manual" | "error";

@@ -7,8 +7,22 @@ describe("manifest", () => {
     const manifest = loadDefaultManifest();
 
     expect(manifest.version).toBe(1);
-    expect(manifest.sites.length).toBeGreaterThanOrEqual(5);
-    expect(manifest.sites.map((site) => site.id)).toContain("github");
+    expect(manifest.sites.length).toBeGreaterThanOrEqual(15);
+    expect(manifest.sites.map((site) => site.id)).toEqual(
+      expect.arrayContaining([
+        "github",
+        "instagram",
+        "twitter",
+        "youtube",
+        "pinterest",
+        "medium",
+        "soundcloud",
+        "threads",
+        "steam",
+        "npm",
+        "twitch",
+      ]),
+    );
   });
 
   test("rejects duplicate site ids", () => {
@@ -25,9 +39,7 @@ describe("manifest", () => {
       ],
     };
 
-    expect(() =>
-      parseManifest({ version: 1, sites: [site, site] }),
-    ).toThrow("Duplicate site id");
+    expect(() => parseManifest({ version: 1, sites: [site, site] })).toThrow("Duplicate site id");
   });
 
   test("rejects rules without conditions", () => {

@@ -1,81 +1,148 @@
 # Mikuru
 
-有力なサイトに絞ってユーザー名の存在を調べる、Bun製のCLIです。サイトごとの取得方法と判定ルールは [`sites.yaml`](./sites.yaml) に定義します。
+Mikuruは、同じユーザー名のアカウントが複数のサービスに存在するか調べるCLIツールです。
 
-## Usage
+見つかったアカウントだけを表示するため、ユーザー名から公開プロフィールを探したい場合にそのまま利用できます。
+
+## 対応サービス
+
+- GitHub
+- GitLab
+- Docker Hub
+- Bluesky
+- Instagram
+- X (Twitter)
+- YouTube
+- Pinterest
+- Medium
+- SoundCloud
+- Threads
+- Steam
+- npm
+- Twitch
+
+サービス側の制限や仕様変更により、一時的に判定できない場合があります。
+
+## Skills
+
+`skills` CLIを使って、GitHubからMikuruスキルをインストールできます。
 
 ```bash
-bun index.ts sherlock-project
-bun index.ts --site github --format json sherlock-project
-bun index.ts --format jsonl alice bob
-bun index.ts --all alice
+bunx skills add p1atdev/mikuru
 ```
 
-出力形式は `text`、`json`、`jsonl` に対応しています。既定ではアカウントが見つかったサイトだけを `results` に含めます。未検出・無効なユーザー名・判定不能・通信エラーも確認する場合は `--all` を指定します。
+`skills` CLIが対応するエージェントとインストール先を環境から判定します。既定では現在のプロジェクトへ追加されます。特定のエージェントやグローバル環境へ追加したい場合は、`--agent` や `--global` を必要に応じて指定できます。
 
-ステータスは、アカウントが見つかった場合は `found`、未検出の場合は `not_found` です。`not_found` はユーザー名を新規登録できることまでは保証しません。
+Codex、Claude Codeなど、`skills` CLIが対応するエージェントで利用できます。
 
-## Commands
+スキルは初回実行時にGitHubからMikuruを取得してビルドするため、Mikuruのソースコードが現在の作業ディレクトリになくても利用できます。
+
+インストール後、エージェントには次のように依頼できます。
+
+```text
+Mikuruを使って alice のアカウントを探して
+```
+
+同じユーザー名が見つかっても、それらのアカウントが同一人物によって管理されているとは限りません。
+
+## インストール
+
+[Bun](https://bun.sh/)とGitが必要です。
 
 ```bash
-bun test
-bun run typecheck
+git clone https://github.com/p1atdev/mikuru.git
+cd mikuru
+bun install --frozen-lockfile
 bun run build
-bun run verify-sites --format json
 ```
 
-`bun run build` は `dist/mikuru` に単一実行ファイルを生成します。
+実行ファイルは `dist/mikuru` に生成されます。
 
-Codex用のプロジェクトローカルスキルは
-`.agents/skills/mikuru/SKILL.md` にあります。スキルはこの実行ファイルを
-JSONモードで呼び出します。
+## 使い方
 
-実サイトを使うテストは通常のテストから分離しています。
+ユーザー名を指定して検索します。
 
 ```bash
-bun run test:live
+./dist/mikuru alice
 ```
 
-無効化したサイトも含めて状態を調べる場合は
-`bun run verify-sites --include-disabled` を使います。
-
-## Site Manifest
-
-```yaml
-version: 1
-sites:
-  - id: example
-    name: Example
-    profileUrl: https://example.com/{username}
-    request:
-      method: HEAD
-    rules:
-      - result: found
-        when:
-          all:
-            - type: status
-              in: [200]
-      - result: not_found
-        when:
-          all:
-            - type: status
-              in: [404]
-```
-
-判定条件はHTTPステータス、最終URL、ヘッダー、本文、JSONパス、HTMLセレクターに対応します。条件は `all`、`any`、`not` で組み合わせられます。一致するルールがない場合は、誤って未使用と判定せず `unknown` を返します。
-
-外部マニフェストも指定できます。
+複数のユーザー名も一度に指定できます。
 
 ```bash
-bun index.ts --config ./custom-sites.yaml username
+./dist/mikuru alice bob
 ```
 
-## Sherlock Import
-
-Sherlockの `data.json` をMikuru形式へ変換できます。変換結果は標準出力へYAMLとして出ます。
+特定のサービスだけを検索する場合は `--site` を指定します。複数回指定できます。
 
 ```bash
-bun run import:sherlock ./data.json > imported-sites.yaml
+./dist/mikuru --site instagram --site twitter alice
 ```
 
-変換は移行の出発点です。各サイトのライブ検証を行い、安定したプローブURLと判定ルールへ調整してください。
+既定では、アカウントが見つかったサービスだけを表示します。
+
+```text
+alice
+  FOUND     GitHub  https://github.com/alice
+
+Summary: found=1 not_found=13
+```
+
+## JSON出力
+
+エージェントやスクリプトから利用する場合はJSONまたはJSON Lines形式を指定できます。
+
+```bash
+./dist/mikuru --format json alice
+./dist/mikuru --format jsonl alice bob
+```
+
+JSONの `results` には、既定では `found` の結果だけが入ります。
+
+```json
+{
+  "results": [
+    {
+      "username": "alice",
+      "site": {
+        "id": "github",
+        "name": "GitHub"
+      },
+      "status": "found",
+      "profileUrl": "https://github.com/alice"
+    }
+  ]
+}
+```
+
+## 全結果を確認する
+
+未検出や判定不能も含めて確認する場合は `--all` を指定します。
+
+```bash
+./dist/mikuru --all alice
+```
+
+ステータスの意味:
+
+| ステータス  | 意味                                         |
+| ----------- | -------------------------------------------- |
+| `found`     | アカウントが見つかった                       |
+| `not_found` | アカウントが見つからなかった                 |
+| `invalid`   | そのサービスでは使用できない形式のユーザー名 |
+| `blocked`   | WAFやレート制限により判定できなかった        |
+| `unknown`   | レスポンスから判定できなかった               |
+| `error`     | 通信エラーやタイムアウトが発生した           |
+
+`not_found` は、そのユーザー名で新規登録できることを保証するものではありません。
+
+## オプション
+
+```text
+-f, --format <text|json|jsonl>  出力形式
+-s, --site <id|name>            検索対象を限定。複数指定可能
+-a, --all                       未検出や判定不能も表示
+    --concurrency <number>      同時リクエスト数
+    --timeout <milliseconds>    サービスごとのタイムアウト
+-h, --help                      ヘルプ
+-v, --version                   バージョン
+```

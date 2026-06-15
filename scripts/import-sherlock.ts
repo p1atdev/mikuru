@@ -1,13 +1,7 @@
 #!/usr/bin/env bun
 
 import { parseArgs } from "node:util";
-import type {
-  Condition,
-  HttpMethod,
-  Manifest,
-  Rule,
-  SiteConfig,
-} from "../src/types.ts";
+import type { Condition, HttpMethod, Manifest, Rule, SiteConfig } from "../src/types.ts";
 
 interface SherlockSite {
   url: string;
@@ -39,14 +33,15 @@ if (parsed.values.help || parsed.positionals.length !== 1) {
 }
 
 const source = parsed.positionals[0]!;
-const raw = source.startsWith("http://") || source.startsWith("https://")
-  ? await fetch(source).then(async (response) => {
-      if (!response.ok) {
-        throw new Error(`Failed to download ${source}: HTTP ${response.status}`);
-      }
-      return response.json();
-    })
-  : await Bun.file(source).json();
+const raw =
+  source.startsWith("http://") || source.startsWith("https://")
+    ? await fetch(source).then(async (response) => {
+        if (!response.ok) {
+          throw new Error(`Failed to download ${source}: HTTP ${response.status}`);
+        }
+        return response.json();
+      })
+    : await Bun.file(source).json();
 
 if (raw === null || typeof raw !== "object" || Array.isArray(raw)) {
   throw new Error("Sherlock data must be a JSON object");
@@ -73,9 +68,7 @@ const manifest: Manifest = {
 console.log(Bun.YAML.stringify(manifest, null, 2));
 
 function convertSite(name: string, source: SherlockSite): SiteConfig {
-  const errorTypes = Array.isArray(source.errorType)
-    ? source.errorType
-    : [source.errorType];
+  const errorTypes = Array.isArray(source.errorType) ? source.errorType : [source.errorType];
   const notFoundConditions: Condition[] = [];
   const foundAll: Condition[] = [];
   const foundNot: Condition[] = [];
@@ -89,19 +82,15 @@ function convertSite(name: string, source: SherlockSite): SiteConfig {
     foundNot.push(messageCondition);
   }
 
-  if (
-    errorTypes.includes("status_code") ||
-    errorTypes.includes("response_url")
-  ) {
-    const errorCodes = source.errorCode === undefined
-      ? undefined
-      : Array.isArray(source.errorCode)
-        ? source.errorCode
-        : [source.errorCode];
+  if (errorTypes.includes("status_code") || errorTypes.includes("response_url")) {
+    const errorCodes =
+      source.errorCode === undefined
+        ? undefined
+        : Array.isArray(source.errorCode)
+          ? source.errorCode
+          : [source.errorCode];
     notFoundConditions.push(
-      errorCodes
-        ? { type: "status", in: errorCodes }
-        : { type: "status", between: [300, 599] },
+      errorCodes ? { type: "status", in: errorCodes } : { type: "status", between: [300, 599] },
     );
     foundAll.push({ type: "status", between: [200, 299] });
   } else {
@@ -126,9 +115,7 @@ function convertSite(name: string, source: SherlockSite): SiteConfig {
 
   const requestMethod =
     source.request_method ??
-    (errorTypes.length === 1 && errorTypes[0] === "status_code"
-      ? "HEAD"
-      : "GET");
+    (errorTypes.length === 1 && errorTypes[0] === "status_code" ? "HEAD" : "GET");
 
   return {
     id: slugify(name),
@@ -141,9 +128,7 @@ function convertSite(name: string, source: SherlockSite): SiteConfig {
       method: requestMethod,
       redirects: errorTypes.includes("response_url") ? "manual" : "follow",
       headers: source.headers,
-      json: source.request_payload
-        ? replaceValuePlaceholders(source.request_payload)
-        : undefined,
+      json: source.request_payload ? replaceValuePlaceholders(source.request_payload) : undefined,
     },
     rules,
     test: {
@@ -166,10 +151,7 @@ function replaceValuePlaceholders(value: unknown): unknown {
   }
   if (value !== null && typeof value === "object") {
     return Object.fromEntries(
-      Object.entries(value).map(([key, item]) => [
-        key,
-        replaceValuePlaceholders(item),
-      ]),
+      Object.entries(value).map(([key, item]) => [key, replaceValuePlaceholders(item)]),
     );
   }
   return value;

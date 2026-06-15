@@ -1,26 +1,16 @@
-import type {
-  AccountStatus,
-  CheckResult,
-  RunReport,
-} from "./types.ts";
+import type { AccountStatus, CheckResult, RunReport } from "./types.ts";
 
-const STATUSES: AccountStatus[] = [
-  "found",
-  "not_found",
-  "invalid",
-  "blocked",
-  "unknown",
-  "error",
-];
+const STATUSES: AccountStatus[] = ["found", "not_found", "invalid", "blocked", "unknown", "error"];
 
 export function createReport(
   usernames: string[],
   results: CheckResult[],
   options: { includeAll?: boolean } = {},
 ): RunReport {
-  const summary = Object.fromEntries(
-    STATUSES.map((status) => [status, 0]),
-  ) as Record<AccountStatus, number>;
+  const summary = Object.fromEntries(STATUSES.map((status) => [status, 0])) as Record<
+    AccountStatus,
+    number
+  >;
 
   for (const result of results) {
     summary[result.status] += 1;
@@ -30,9 +20,7 @@ export function createReport(
     schemaVersion: 1,
     generatedAt: new Date().toISOString(),
     usernames,
-    results: options.includeAll
-      ? results
-      : results.filter((result) => result.status === "found"),
+    results: options.includeAll ? results : results.filter((result) => result.status === "found"),
     summary,
   };
 }
@@ -43,9 +31,7 @@ export function formatJson(report: RunReport): string {
 
 export function formatJsonLines(report: RunReport): string {
   return [
-    ...report.results.map((result) =>
-      JSON.stringify({ type: "result", ...result }),
-    ),
+    ...report.results.map((result) => JSON.stringify({ type: "result", ...result })),
     JSON.stringify({
       type: "summary",
       generatedAt: report.generatedAt,
@@ -69,8 +55,7 @@ export function formatText(report: RunReport): string {
     }
 
     const status = result.status.toUpperCase().padEnd(9);
-    const detail =
-      result.status === "found" ? result.profileUrl : result.error ?? "";
+    const detail = result.status === "found" ? result.profileUrl : (result.error ?? "");
     lines.push(`  ${status} ${result.site.name}${detail ? `  ${detail}` : ""}`);
   }
 

@@ -2,12 +2,7 @@ import { parseArgs } from "node:util";
 import { loadDefaultManifest } from "./config/default.ts";
 import { loadManifestFile } from "./config/load.ts";
 import { checkUsernames } from "./core/check.ts";
-import {
-  createReport,
-  formatJson,
-  formatJsonLines,
-  formatText,
-} from "./output.ts";
+import { createReport, formatJson, formatJsonLines, formatText } from "./output.ts";
 
 const VERSION = "0.1.0";
 
@@ -43,10 +38,7 @@ export async function main(args = Bun.argv.slice(2)): Promise<void> {
     }
 
     const format = parseFormat(parsed.values.format);
-    const concurrency = parsePositiveInteger(
-      parsed.values.concurrency,
-      "--concurrency",
-    );
+    const concurrency = parsePositiveInteger(parsed.values.concurrency, "--concurrency");
     const timeoutMs = parsePositiveInteger(parsed.values.timeout, "--timeout");
     const manifest = parsed.values.config
       ? await loadManifestFile(parsed.values.config)
@@ -72,10 +64,7 @@ export async function main(args = Bun.argv.slice(2)): Promise<void> {
 
     if (requestedSites.size > 0) {
       const matched = new Set(
-        sites.flatMap((site) => [
-          site.id.toLocaleLowerCase(),
-          site.name.toLocaleLowerCase(),
-        ]),
+        sites.flatMap((site) => [site.id.toLocaleLowerCase(), site.name.toLocaleLowerCase()]),
       );
       const missing = [...requestedSites].filter((site) => !matched.has(site));
       if (missing.length > 0) {
@@ -83,12 +72,10 @@ export async function main(args = Bun.argv.slice(2)): Promise<void> {
       }
     }
 
-    const results = await checkUsernames(
-      parsed.positionals,
-      sites,
-      manifest,
-      { concurrency, timeoutMs },
-    );
+    const results = await checkUsernames(parsed.positionals, sites, manifest, {
+      concurrency,
+      timeoutMs,
+    });
     const report = createReport(parsed.positionals, results, {
       includeAll: parsed.values.all,
     });
@@ -117,10 +104,7 @@ function parseFormat(value: string | undefined): "text" | "json" | "jsonl" {
   throw new Error("--format must be text, json, or jsonl");
 }
 
-function parsePositiveInteger(
-  value: string | undefined,
-  option: string,
-): number | undefined {
+function parsePositiveInteger(value: string | undefined, option: string): number | undefined {
   if (value === undefined) {
     return undefined;
   }
