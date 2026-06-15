@@ -47,6 +47,17 @@ describe("manifest", () => {
         "itch-io",
         "hatena",
         "kaggle",
+        "mastodon-social",
+        "misskey-io",
+        "bitbucket",
+        "gitea",
+        "nuget",
+        "codewars",
+        "speaker-deck",
+        "wantedly",
+        "anilist",
+        "discogs",
+        "pastebin",
       ]),
     );
   });

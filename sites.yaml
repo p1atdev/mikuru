@@ -1000,6 +1000,307 @@ sites:
       found: benhamner
       notFoundTemplate: mikurucheck{random}
 
+  - id: mastodon-social
+    name: Mastodon.social
+    profileUrl: https://mastodon.social/@{username}
+    username:
+      pattern: "^[a-zA-Z0-9_]{1,30}$"
+    request:
+      url: https://mastodon.social/api/v1/accounts/lookup?acct={username}
+      method: GET
+      headers:
+        accept: application/json
+    rules:
+      - result: found
+        reason: Mastodon account lookup returned a profile
+        when:
+          all:
+            - type: status
+              in: [200]
+            - type: json
+              path: [id]
+              exists: true
+      - result: not_found
+        reason: Mastodon account lookup did not find the user
+        when:
+          all:
+            - type: status
+              in: [404]
+            - type: json
+              path: [error]
+              includes: Record not found
+    test:
+      found: Gargron
+      notFoundTemplate: mk{random}
+
+  - id: misskey-io
+    name: Misskey.io
+    profileUrl: https://misskey.io/@{username}
+    username:
+      pattern: "^[a-zA-Z0-9_]{1,20}$"
+    request:
+      url: https://misskey.io/api/users/show
+      method: POST
+      headers:
+        accept: application/json
+      json:
+        username: "{username}"
+    rules:
+      - result: found
+        reason: Misskey user API returned a profile
+        when:
+          all:
+            - type: status
+              in: [200]
+            - type: json
+              path: [id]
+              exists: true
+      - result: not_found
+        reason: Misskey user API reported no such user
+        when:
+          all:
+            - type: status
+              in: [404]
+            - type: json
+              path: [error, code]
+              equals: NO_SUCH_USER
+    test:
+      found: syuilo
+      notFoundTemplate: mk{random}
+
+  - id: bitbucket
+    name: Bitbucket
+    profileUrl: https://bitbucket.org/{username}/
+    username:
+      pattern: "^[a-zA-Z0-9_-]{1,30}$"
+    request:
+      method: GET
+    rules:
+      - result: found
+        reason: Bitbucket workspace page exists
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: Bitbucket workspace page was not found
+        when:
+          all:
+            - type: status
+              in: [404]
+    test:
+      found: evzijst
+      notFoundTemplate: mk{random}
+
+  - id: gitea
+    name: Gitea.com
+    profileUrl: https://gitea.com/{username}
+    request:
+      method: GET
+    rules:
+      - result: found
+        reason: Gitea profile page exists
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: Gitea profile page was not found
+        when:
+          all:
+            - type: status
+              in: [404]
+    test:
+      found: lunny
+      notFoundTemplate: mk{random}
+
+  - id: nuget
+    name: NuGet
+    profileUrl: https://www.nuget.org/profiles/{username}
+    request:
+      method: GET
+    rules:
+      - result: found
+        reason: NuGet profile page exists
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: NuGet profile page was not found
+        when:
+          all:
+            - type: status
+              in: [404]
+    test:
+      found: microsoft
+      notFoundTemplate: mk{random}
+
+  - id: codewars
+    name: Codewars
+    profileUrl: https://www.codewars.com/users/{username}
+    request:
+      url: https://www.codewars.com/api/v1/users/{username}
+      method: GET
+      headers:
+        accept: application/json
+    rules:
+      - result: found
+        reason: Codewars user API returned a profile
+        when:
+          all:
+            - type: status
+              in: [200]
+            - type: json
+              path: [id]
+              exists: true
+      - result: not_found
+        reason: Codewars user API did not find the user
+        when:
+          all:
+            - type: status
+              in: [404]
+            - type: json
+              path: [reason]
+              equals: not found
+    test:
+      found: g964
+      notFoundTemplate: mk{random}
+
+  - id: speaker-deck
+    name: Speaker Deck
+    profileUrl: https://speakerdeck.com/{username}
+    request:
+      method: GET
+    rules:
+      - result: found
+        reason: Speaker Deck profile page exists
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: Speaker Deck profile page was not found
+        when:
+          all:
+            - type: status
+              in: [404]
+    test:
+      found: holman
+      notFoundTemplate: mk{random}
+
+  - id: wantedly
+    name: Wantedly
+    profileUrl: https://www.wantedly.com/id/{username}
+    request:
+      method: GET
+    rules:
+      - result: found
+        reason: Wantedly profile page exists
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: Wantedly profile page was not found
+        when:
+          all:
+            - type: status
+              in: [404]
+    test:
+      found: akiko_naka
+      notFoundTemplate: mk{random}
+
+  - id: anilist
+    name: AniList
+    profileUrl: https://anilist.co/user/{username}/
+    username:
+      pattern: "^[a-zA-Z0-9]{2,20}$"
+    request:
+      url: https://graphql.anilist.co/
+      method: POST
+      headers:
+        accept: application/json
+      json:
+        query: "query($name: String) { User(name: $name) { id name } }"
+        variables:
+          name: "{username}"
+    rules:
+      - result: found
+        reason: AniList GraphQL API returned a profile
+        when:
+          all:
+            - type: status
+              in: [200]
+            - type: json
+              path: [data, User, id]
+              exists: true
+      - result: not_found
+        reason: AniList GraphQL API did not find the user
+        when:
+          all:
+            - type: status
+              in: [404]
+            - type: json
+              path: [data, User]
+              equals: null
+    test:
+      found: AniList
+      notFoundTemplate: mk{random}
+
+  - id: discogs
+    name: Discogs
+    profileUrl: https://www.discogs.com/user/{username}
+    request:
+      url: https://api.discogs.com/users/{username}
+      method: GET
+      headers:
+        accept: application/json
+    rules:
+      - result: found
+        reason: Discogs user API returned a profile
+        when:
+          all:
+            - type: status
+              in: [200]
+            - type: json
+              path: [id]
+              exists: true
+      - result: not_found
+        reason: Discogs user API did not find the user
+        when:
+          all:
+            - type: status
+              in: [404]
+            - type: json
+              path: [message]
+              includes: User does not exist
+    test:
+      found: discogs
+      notFoundTemplate: mk{random}
+
+  - id: pastebin
+    name: Pastebin
+    profileUrl: https://pastebin.com/u/{username}
+    request:
+      method: HEAD
+    rules:
+      - result: found
+        reason: Pastebin profile page exists
+        when:
+          all:
+            - type: status
+              in: [200]
+      - result: not_found
+        reason: Pastebin profile page was not found
+        when:
+          all:
+            - type: status
+              in: [404]
+    test:
+      found: Pastebin
+      notFoundTemplate: mk{random}
+
   - id: hacker-news
     name: Hacker News
     # Shared cloud IPs are frequently rate limited with HTTP 429.
