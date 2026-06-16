@@ -63,14 +63,23 @@ export async function checkUsernames(
   usernames: string[],
   sites: SiteConfig[],
   manifest: LoadedManifest,
-  options: CheckOptions & { concurrency?: number } = {},
+  options: CheckOptions & {
+    concurrency?: number;
+    onResult?: (result: CheckResult, completed: number, total: number) => void;
+  } = {},
 ): Promise<CheckResult[]> {
   const jobs = usernames.flatMap((username) => sites.map((site) => ({ username, site })));
+  let completed = 0;
 
   return mapConcurrent(
     jobs,
     options.concurrency ?? manifest.defaults.concurrency,
-    ({ username, site }) => checkUsernameOnSite(username, site, manifest, options),
+    async ({ username, site }) => {
+      const result = await checkUsernameOnSite(username, site, manifest, options);
+      completed += 1;
+      options.onResult?.(result, completed, jobs.length);
+      return result;
+    },
   );
 }
 

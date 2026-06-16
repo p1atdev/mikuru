@@ -19,6 +19,9 @@
     "lint": "oxlint --deny-warnings"
   },
   "dependencies": {
+    "@clack/prompts": "^1.5.1",
+    "@cliffy/command": "npm:@jsr/cliffy__command",
+    "@cliffy/table": "npm:@jsr/cliffy__table",
     "valibot": "^1.4.1"
   },
   "devDependencies": {

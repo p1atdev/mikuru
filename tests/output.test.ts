@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { createReport, formatJsonLines, formatText } from "../src/output.ts";
+import { createReport, formatJsonLines, formatRichText, formatText } from "../src/output.ts";
 import type { CheckResult } from "../src/types.ts";
 
 const result: CheckResult = {
@@ -39,4 +39,21 @@ test("omits non-matches unless includeAll is enabled", () => {
     includeAll: true,
   });
   expect(fullReport.results).toEqual([notFound]);
+});
+
+test("formats rich terminal reports with tables and full summary counts", () => {
+  const notFound: CheckResult = {
+    ...result,
+    status: "not_found",
+    profileUrl: "https://example.com/missing",
+  };
+  const report = createReport(["alice"], [result, notFound]);
+
+  const output = formatRichText(report, { colors: false, width: 80 });
+
+  expect(output).toContain("Status");
+  expect(output).toContain("FOUND");
+  expect(output).toContain("https://example.com/alice");
+  expect(output).toContain("Summary");
+  expect(output).toContain("NOT_FOUND");
 });

@@ -1,6 +1,16 @@
+import { Table } from "@cliffy/table";
 import type { AccountStatus, CheckResult, RunReport } from "./types.ts";
 
 const STATUSES: AccountStatus[] = ["found", "not_found", "invalid", "blocked", "unknown", "error"];
+const ANSI = {
+  reset: "\x1b[0m",
+  bold: "\x1b[1m",
+  dim: "\x1b[2m",
+  red: "\x1b[31m",
+  green: "\x1b[32m",
+  yellow: "\x1b[33m",
+  cyan: "\x1b[36m",
+};
 
 export function createReport(
   usernames: string[],
@@ -67,4 +77,93 @@ export function formatText(report: RunReport): string {
   }
   lines.push("", `Summary: ${counts || "no results"}`);
   return lines.join("\n");
+}
+
+export function formatRichText(
+  report: RunReport,
+  options: { colors?: boolean; width?: number } = {},
+): string {
+  const colors = options.colors ?? true;
+  const width = options.width ?? 100;
+  const lines: string[] = [];
+  const grouped = groupResultsByUsername(report.results);
+
+  for (const username of report.usernames) {
+    const results = grouped.get(username);
+    if (!results || results.length === 0) {
+      continue;
+    }
+
+    if (lines.length > 0) {
+      lines.push("");
+    }
+    lines.push(style(username, ANSI.bold, colors));
+    lines.push(resultTable(results, colors, width));
+  }
+
+  if (report.results.length === 0) {
+    lines.push("No accounts found.");
+  }
+
+  lines.push("", style("Summary", ANSI.bold, colors), summaryTable(report, colors, width));
+  return lines.join("\n");
+}
+
+function groupResultsByUsername(results: CheckResult[]): Map<string, CheckResult[]> {
+  const grouped = new Map<string, CheckResult[]>();
+  for (const result of results) {
+    const entries = grouped.get(result.username) ?? [];
+    entries.push(result);
+    grouped.set(result.username, entries);
+  }
+  return grouped;
+}
+
+function resultTable(results: CheckResult[], colors: boolean, width: number): string {
+  return new Table()
+    .header(["Status", "Site", "Profile", "Detail"])
+    .body(
+      results.map((result) => [
+        formatStatus(result.status, colors),
+        result.site.name,
+        result.status === "found" ? result.profileUrl : "",
+        result.error ?? result.evidence?.reason ?? "",
+      ]),
+    )
+    .maxWidth(width)
+    .toString();
+}
+
+function summaryTable(report: RunReport, colors: boolean, width: number): string {
+  return new Table()
+    .header(["Status", "Count"])
+    .body(
+      STATUSES.filter((status) => report.summary[status] > 0).map((status) => [
+        formatStatus(status, colors),
+        String(report.summary[status]),
+      ]),
+    )
+    .maxWidth(Math.min(width, 48))
+    .toString();
+}
+
+function formatStatus(status: AccountStatus, colors: boolean): string {
+  const label = status.toUpperCase();
+  switch (status) {
+    case "found":
+      return style(label, ANSI.green, colors);
+    case "not_found":
+      return style(label, ANSI.dim, colors);
+    case "invalid":
+    case "blocked":
+      return style(label, ANSI.yellow, colors);
+    case "unknown":
+      return style(label, ANSI.cyan, colors);
+    case "error":
+      return style(label, ANSI.red, colors);
+  }
+}
+
+function style(value: string, code: string, enabled: boolean): string {
+  return enabled ? `${code}${value}${ANSI.reset}` : value;
 }
