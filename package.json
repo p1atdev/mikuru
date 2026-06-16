@@ -15,8 +15,9 @@
     "import:sherlock": "bun scripts/import-sherlock.ts",
     "typecheck": "bunx tsc --noEmit",
     "build": "bun build index.ts --compile --outfile dist/mikuru",
-    "format": "oxfmt",
-    "lint": "oxlint --deny-warnings"
+    "build:skill": "bun build index.ts --target bun --minify --outfile .agents/skills/mikuru/assets/mikuru.js",
+    "format": "oxfmt '!.agents/skills/mikuru/assets/**'",
+    "lint": "oxlint --deny-warnings --ignore-pattern '.agents/skills/mikuru/assets/**'"
   },
   "dependencies": {
     "@clack/prompts": "^1.5.1",

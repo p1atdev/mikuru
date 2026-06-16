@@ -1,39 +1,52 @@
 ---
 name: mikuru
-description: Check whether one or more usernames have public accounts across Mikuru's curated services. Use when a user asks to search for a username, find matching social profiles, investigate username reuse, or check selected services. The bundled launcher fetches and builds Mikuru from GitHub, so no local Mikuru checkout is required.
+description: Check whether one or more usernames have public accounts across Mikuru's supported sites. Use when a user asks to search for a username, find matching public profiles or accounts, investigate username reuse, or check selected services.
 ---
 
 # Mikuru
 
-Use the bundled `scripts/mikuru` launcher. Do not assume the current working
-directory contains the Mikuru repository.
+Use the bundled `scripts/mikuru` launcher. It runs `assets/mikuru.js` with Bun
+and forwards CLI arguments.
 
 ## Run
 
-1. Resolve `SKILL_DIR` as the directory containing this `SKILL.md`.
-2. Run the launcher with Bash and JSON output:
+Resolve `SKILL_DIR` as the directory containing this `SKILL.md`.
 
-   ```bash
-   bash "$SKILL_DIR/scripts/mikuru" --format json <username>
-   ```
+Prefer JSON when using results in an agent response:
 
-   The launcher clones or updates `https://github.com/p1atdev/mikuru.git` in
-   a temporary cache, installs locked dependencies, builds the executable, and
-   then forwards all arguments. Network access is required on the first run
-   and when checking for updates.
+```bash
+bash "$SKILL_DIR/scripts/mikuru" --format json <username>
+```
 
-3. Pass multiple usernames as positionals. Limit services by repeating
-   `--site <id-or-name>`. Add `--all` only when complete diagnostics are
-   needed.
+Use `--short` for quick human-readable text output:
+
+```bash
+bash "$SKILL_DIR/scripts/mikuru" --short <username>
+```
+
+`--short` only affects text output. It disables interactive progress and rich
+tables, then prints simple text. Prefer `--format json` for structured parsing.
+
+Examples:
+
+```bash
+bash "$SKILL_DIR/scripts/mikuru" --format json alice bob
+bash "$SKILL_DIR/scripts/mikuru" --format json --site github --site instagram alice
+bash "$SKILL_DIR/scripts/mikuru" --format json --all alice
+bash "$SKILL_DIR/scripts/mikuru" --short --site github alice
+```
+
+Pass multiple usernames as positionals. Limit services by repeating
+`--site <id-or-name>`. Add `--all` when non-matches and inconclusive statuses
+are needed.
 
 ## Interpret
 
-- Report `found` results with `profileUrl`.
-- Treat `not_found` as no matching account, not proof that registration is
-  available.
-- Treat `invalid`, `blocked`, `unknown`, and `error` as inconclusive or
-  non-matching. Never report them as found.
+- Report only `found` results as matching accounts, and include `profileUrl`.
+- Treat `not_found` as no matching account, not proof that registration is available.
+- Treat `invalid`, `blocked`, `unknown`, and `error` as inconclusive or non-matching.
+  Never report them as found.
 - State that matching usernames do not prove common ownership.
 
-If the launcher reports that Git or Bun is missing, explain that prerequisite
-instead of attempting an unrelated fallback.
+If the launcher reports that Bun is missing, explain that prerequisite instead
+of attempting an unrelated fallback.

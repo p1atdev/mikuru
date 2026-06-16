@@ -2,51 +2,17 @@
 
 set -euo pipefail
 
-repository="${MIKURU_REPOSITORY:-https://github.com/p1atdev/mikuru.git}"
-ref="${MIKURU_REF:-main}"
-cache_root="${MIKURU_CACHE_DIR:-${TMPDIR:-/tmp}/mikuru-skill-${USER:-user}}"
-checkout="$cache_root/repository"
-binary="$cache_root/mikuru"
-stamp="$cache_root/built-commit"
+skill_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+bundle="$skill_dir/assets/mikuru.js"
 
-for command in git bun; do
-  if ! command -v "$command" >/dev/null 2>&1; then
-    printf 'mikuru skill: required command not found: %s\n' "$command" >&2
-    exit 127
-  fi
-done
-
-mkdir -p "$cache_root"
-
-if [[ ! -d "$checkout/.git" ]]; then
-  temporary_checkout="$cache_root/repository.tmp.$$"
-  git clone --filter=blob:none --no-checkout "$repository" "$temporary_checkout" >&2
-  mv "$temporary_checkout" "$checkout"
+if ! command -v bun >/dev/null 2>&1; then
+  printf 'mikuru skill: required command not found: bun\n' >&2
+  exit 127
 fi
 
-git -C "$checkout" remote set-url origin "$repository"
-
-if git -C "$checkout" fetch --depth 1 origin "$ref" >&2; then
-  commit="$(git -C "$checkout" rev-parse FETCH_HEAD)"
-else
-  commit="$(git -C "$checkout" rev-parse HEAD 2>/dev/null || true)"
-  if [[ -z "$commit" ]]; then
-    printf 'mikuru skill: failed to fetch %s at %s\n' "$repository" "$ref" >&2
-    exit 1
-  fi
-  printf 'mikuru skill: update failed; using cached commit %s\n' "$commit" >&2
+if [[ ! -f "$bundle" ]]; then
+  printf 'mikuru skill: bundled executable not found: %s\n' "$bundle" >&2
+  exit 1
 fi
 
-installed_commit="$(cat "$stamp" 2>/dev/null || true)"
-if [[ ! -x "$binary" || "$installed_commit" != "$commit" ]]; then
-  git -C "$checkout" checkout --detach --force "$commit" >&2
-  bun install --cwd "$checkout" --frozen-lockfile >&2
-
-  temporary_binary="$cache_root/mikuru.tmp.$$"
-  bun build "$checkout/index.ts" --compile --outfile "$temporary_binary" >&2
-  chmod +x "$temporary_binary"
-  mv "$temporary_binary" "$binary"
-  printf '%s\n' "$commit" >"$stamp"
-fi
-
-exec "$binary" "$@"
+exec bun "$bundle" "$@"
