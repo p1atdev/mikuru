@@ -7,6 +7,7 @@ describe("manifest", () => {
     const manifest = loadDefaultManifest();
 
     expect(manifest.version).toBe(1);
+    expect(manifest.defaults.concurrency).toBe(16);
     expect(manifest.sites.length).toBeGreaterThanOrEqual(15);
     expect(manifest.sites.map((site) => site.id)).toEqual(
       expect.arrayContaining([

@@ -58,7 +58,7 @@ for (const [name, value] of Object.entries(raw)) {
 const manifest: Manifest = {
   version: 1,
   defaults: {
-    concurrency: 8,
+    concurrency: 16,
     timeoutMs: 10_000,
     blockedStatuses: [403, 429],
   },

@@ -18,7 +18,7 @@ export function parseManifest(input: unknown): LoadedManifest {
   return {
     version: 1,
     defaults: {
-      concurrency: parsed.output.defaults?.concurrency ?? 8,
+      concurrency: parsed.output.defaults?.concurrency ?? 16,
       timeoutMs: parsed.output.defaults?.timeoutMs ?? 10_000,
       headers: {
         ...DEFAULT_HEADERS,
