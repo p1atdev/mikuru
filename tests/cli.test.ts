@@ -1,10 +1,6 @@
-import { afterAll, describe, expect, test } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import { unlink } from "node:fs/promises";
 import { main, shouldUseRichOutput } from "../src/cli.ts";
-
-let server: ReturnType<typeof Bun.serve>;
-
-afterAll(() => server?.stop(true));
 
 describe("cli", () => {
   test("prints the existing version string", async () => {
@@ -16,7 +12,7 @@ describe("cli", () => {
   });
 
   test("keeps json output machine-readable", async () => {
-    server = startTestServer();
+    const server = startTestServer();
     const manifestPath = await writeManifest(server.url.toString());
 
     try {
@@ -34,6 +30,37 @@ describe("cli", () => {
       });
     } finally {
       await unlink(manifestPath);
+      server.stop(true);
+    }
+  });
+
+  test("uses simple text output with --short even on an interactive terminal", async () => {
+    const server = startTestServer();
+    const manifestPath = await writeManifest(server.url.toString());
+    const restoreStdout = replaceIsTty(process.stdout, true);
+    const restoreStderr = replaceIsTty(process.stderr, true);
+    const originalCi = process.env.CI;
+
+    try {
+      delete process.env.CI;
+      const output = await captureMain(["--short", "--config", manifestPath, "alice"]);
+
+      expect(output.stderr).toBe("");
+      expect(output.stdout).toContain("FOUND     Local");
+      expect(output.stdout).toContain(`${server.url}profiles/alice`);
+      expect(output.stdout).not.toContain("Status");
+      expect(output.stdout).not.toContain("\x1b[");
+      expect(output.exitCode).toBeUndefined();
+    } finally {
+      restoreStdout();
+      restoreStderr();
+      if (originalCi === undefined) {
+        delete process.env.CI;
+      } else {
+        process.env.CI = originalCi;
+      }
+      await unlink(manifestPath);
+      server.stop(true);
     }
   });
 
@@ -45,6 +72,7 @@ describe("cli", () => {
     try {
       delete process.env.CI;
       expect(shouldUseRichOutput("text")).toBeTrue();
+      expect(shouldUseRichOutput("text", { short: true })).toBeFalse();
       expect(shouldUseRichOutput("json")).toBeFalse();
 
       process.env.CI = "1";

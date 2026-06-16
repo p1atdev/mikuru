@@ -65,7 +65,7 @@ export function formatText(report: RunReport): string {
     }
 
     const status = result.status.toUpperCase().padEnd(9);
-    const detail = result.status === "found" ? result.profileUrl : (result.error ?? "");
+    const detail = resultDetail(result);
     lines.push(`  ${status} ${result.site.name}${detail ? `  ${detail}` : ""}`);
   }
 
@@ -127,7 +127,7 @@ function resultTable(results: CheckResult[], colors: boolean, width: number): st
         formatStatus(result.status, colors),
         result.site.name,
         result.status === "found" ? result.profileUrl : "",
-        result.error ?? result.evidence?.reason ?? "",
+        resultDetail(result, { omitFoundProfile: true }),
       ]),
     )
     .maxWidth(width)
@@ -162,6 +162,13 @@ function formatStatus(status: AccountStatus, colors: boolean): string {
     case "error":
       return style(label, ANSI.red, colors);
   }
+}
+
+function resultDetail(result: CheckResult, options: { omitFoundProfile?: boolean } = {}): string {
+  if (result.status === "found" && !options.omitFoundProfile) {
+    return result.profileUrl;
+  }
+  return result.error ?? result.evidence?.reason ?? "";
 }
 
 function style(value: string, code: string, enabled: boolean): string {

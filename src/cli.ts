@@ -15,6 +15,7 @@ interface CliOptions {
   format?: string;
   help?: boolean;
   includeDisabled?: boolean;
+  short?: boolean;
   site?: string[];
   timeout?: number;
   version?: boolean;
@@ -72,7 +73,7 @@ export async function main(args = Bun.argv.slice(2)): Promise<void> {
       }
     }
 
-    const richOutput = shouldUseRichOutput(format);
+    const richOutput = shouldUseRichOutput(format, { short: options.short });
     const totalChecks = usernames.length * sites.length;
     let foundCount = 0;
     const startedAt = performance.now();
@@ -155,6 +156,7 @@ function buildCommand(options: { colors: boolean }) {
     .option("--concurrency <number:integer>", "Maximum simultaneous requests")
     .option("--timeout <milliseconds:integer>", "Per-request timeout")
     .option("-a, --all", "Include non-matches and inconclusive results")
+    .option("--short", "Use simple text output without interactive progress or tables")
     .option("--include-disabled", "Include disabled sites")
     .arguments("[username...:string]")
     .throwErrors()
@@ -182,8 +184,11 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-export function shouldUseRichOutput(format: OutputFormat): boolean {
-  return format === "text" && isInteractiveOutput();
+export function shouldUseRichOutput(
+  format: OutputFormat,
+  options: { short?: boolean } = {},
+): boolean {
+  return format === "text" && !options.short && isInteractiveOutput();
 }
 
 function isInteractiveOutput(): boolean {
