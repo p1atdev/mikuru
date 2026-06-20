@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { evaluateResponse, responseNeedsBody } from "../src/core/evaluate.ts";
-import type { ProbeResponse, Rule } from "../src/types.ts";
+import { evaluateResponse, responseNeedsBody } from "../src/core/evaluate";
+import type { ProbeResponse, Rule } from "../src/types";
 
 function response(overrides: Partial<ProbeResponse> = {}): ProbeResponse {
   return {

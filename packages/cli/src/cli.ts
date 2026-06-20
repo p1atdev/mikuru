@@ -1,9 +1,9 @@
 import { progress, type ProgressResult } from "@clack/prompts";
 import { Command } from "@cliffy/command";
-import { loadDefaultManifest } from "./config/default.ts";
-import { loadManifestFile } from "./config/load.ts";
-import { checkUsernames } from "./core/check.ts";
-import { createReport, formatJson, formatJsonLines, formatRichText, formatText } from "./output.ts";
+import { loadDefaultManifest } from "core/src/config/default";
+import { loadManifestFile } from "core/src/config/load";
+import { checkUsernames } from "core/src/core/check";
+import { createReport, formatJson, formatJsonLines, formatRichText, formatText } from "./output";
 
 const VERSION = "0.1.0";
 type OutputFormat = "text" | "json" | "jsonl";

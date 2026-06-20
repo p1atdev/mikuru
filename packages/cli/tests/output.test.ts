@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
-import { createReport, formatJsonLines, formatRichText, formatText } from "../src/output.ts";
-import type { CheckResult } from "../src/types.ts";
+import { createReport, formatJsonLines, formatRichText, formatText } from "../src/output";
+import type { CheckResult } from "core/src/types.ts";
 
 const result: CheckResult = {
   username: "alice",

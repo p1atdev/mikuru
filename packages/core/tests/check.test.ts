@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
-import { parseManifest } from "../src/config/load.ts";
-import { checkUsernames } from "../src/core/check.ts";
+import { parseManifest } from "../src/config/load";
+import { checkUsernames } from "../src/core/check";
 
 test("checkUsernames reports progress as each check completes", async () => {
   const manifest = parseManifest({

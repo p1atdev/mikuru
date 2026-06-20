@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { loadDefaultManifest } from "../src/config/default.ts";
-import { parseManifest } from "../src/config/load.ts";
+import { loadDefaultManifest } from "../src/config/default";
+import { parseManifest } from "../src/config/load";
 
 describe("manifest", () => {
   test("loads the bundled site manifest", () => {

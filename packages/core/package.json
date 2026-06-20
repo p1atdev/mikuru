@@ -1,0 +1,19 @@
+{
+  "name": "core",
+  "type": "module",
+  "scripts": {
+    "test": "bun test",
+    "test:live": "MIKURU_LIVE=1 bun test tests/live-sites.test.ts",
+    "import:sherlock": "bun scripts/import-sherlock.ts",
+    "typecheck": "bunx tsc --noEmit"
+  },
+  "dependencies": {
+    "valibot": "catalog:"
+  },
+  "devDependencies": {
+    "@types/bun": "catalog:"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}

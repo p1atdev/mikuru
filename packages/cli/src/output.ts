@@ -1,5 +1,5 @@
 import { Table } from "@cliffy/table";
-import type { AccountStatus, CheckResult, RunReport } from "./types.ts";
+import type { AccountStatus, CheckResult, RunReport } from "core/src/types";
 
 const STATUSES: AccountStatus[] = ["found", "not_found", "invalid", "blocked", "unknown", "error"];
 const ANSI = {

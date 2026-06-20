@@ -1,0 +1,24 @@
+{
+  "name": "cli",
+  "type": "module",
+  "scripts": {
+    "start": "bun index.ts",
+    "test": "bun test",
+    "typecheck": "bunx tsc --noEmit",
+    "build": "bun build index.ts --compile --outfile ../../dist/mikuru",
+    "build:skill": "bun build index.ts --target bun --minify --outfile ../../.agents/skills/mikuru/assets/mikuru.js"
+  },
+  "dependencies": {
+    "@clack/prompts": "^1.5.1",
+    "@cliffy/command": "npm:@jsr/cliffy__command",
+    "@cliffy/table": "npm:@jsr/cliffy__table",
+    "core": "workspace:*",
+    "valibot": "catalog:"
+  },
+  "devDependencies": {
+    "@types/bun": "catalog:"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
