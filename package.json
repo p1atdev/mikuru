@@ -1,14 +1,6 @@
 {
   "name": "mikuru",
-  "devDependencies": {
-    "oxfmt": "^0.55.0",
-    "oxlint": "^1.70.0"
-  },
   "private": true,
-  "scripts": {
-    "format": "oxfmt '!.agents/skills/mikuru/assets/**'",
-    "lint": "oxlint --deny-warnings --ignore-pattern '.agents/skills/mikuru/assets/**'"
-  },
   "workspaces": {
     "packages": [
       "packages/*"
@@ -17,5 +9,13 @@
       "valibot": "^1.4.1",
       "@types/bun": "latest"
     }
+  },
+  "scripts": {
+    "format": "oxfmt '!.agents/skills/mikuru/assets/**'",
+    "lint": "oxlint --deny-warnings --ignore-pattern '.agents/skills/mikuru/assets/**'"
+  },
+  "devDependencies": {
+    "oxfmt": "^0.55.0",
+    "oxlint": "^1.70.0"
   }
 }

@@ -2,7 +2,7 @@
 
 **EN** | [JP](README.ja.md)
 
-> 重ねた推理で笑顔にジャンプ！ 
+> 重ねた推理で笑顔にジャンプ！
 
 Mikuru is a CLI tool that checks the existence of an account with the same username across multiple services.
 
@@ -91,7 +91,7 @@ After installation, you can ask the agent:
 Find alice's accounts using Mikuru
 ```
 
-*Note: Finding accounts with the same username does not guarantee they are managed by the same person.*
+_Note: Finding accounts with the same username does not guarantee they are managed by the same person._
 
 ## Installation
 
@@ -185,16 +185,16 @@ To include elements that were not detected or could not be determined, specify `
 
 Status meanings:
 
-| Status | Meaning |
+| Status      | Meaning                                      |
 | ----------- | -------------------------------------------- |
-| `found`     | Account was found |
-| `not_found` | Account was not found |
-| `invalid`   | Username pattern is invalid on that service |
+| `found`     | Account was found                            |
+| `not_found` | Account was not found                        |
+| `invalid`   | Username pattern is invalid on that service  |
 | `blocked`   | Could not verify due to WAF or rate limiting |
-| `unknown`   | Could not verify from response |
-| `error`     | Connection error or timeout occurred |
+| `unknown`   | Could not verify from response               |
+| `error`     | Connection error or timeout occurred         |
 
-*Note: `not_found` does not guarantee that the username is available for new registration.*
+_Note: `not_found` does not guarantee that the username is available for new registration._
 
 ## Options
 
