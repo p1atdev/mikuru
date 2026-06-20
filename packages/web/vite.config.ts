@@ -12,7 +12,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
     cloudflare({
-      configPath: "../../wrangler.toml",
+      configPath: "./wrangler.toml",
     }),
     ssrPlugin(),
     yamlPlugin(),
