@@ -1,8 +1,12 @@
 # Mikuru
 
 `sherlock-project/sherlock` の Bun 再実装。
+core, cli, web のモノレポ。
 
 ## 機能
+
+- `packages/core`
+- `packages/cli`
 
 有力なサイトに絞って、アカウントの存在をチェックする。
 
@@ -54,3 +58,20 @@ test("hello world", () => {
   expect(1).toBe(1);
 });
 ```
+
+## Web
+
+- `packages/web`
+
+mikuru を cloudflare workers 上で動かす。
+
+### UI
+
+Kumo UI を用いる。詳細は
+
+```bash
+bunx @cloudflare/kumo help
+```
+
+で調べること。
+

@@ -1,0 +1,5 @@
+# $schema = "node_modules/wrangler/config-schema.json"
+name = "mikuru"
+
+compatibility_date = "2026-06-20"
+main = "packages/web/src/index.tsx"
