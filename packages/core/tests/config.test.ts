@@ -1,6 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import { loadDefaultManifest } from "../src/config/default";
 import { parseManifest } from "../src/config/load";
+import { evaluateResponse } from "../src/core/evaluate";
+import { prepareRequest } from "../src/core/request";
+import type { ProbeResponse } from "../src/types";
 
 describe("manifest", () => {
   test("loads the bundled site manifest", () => {
@@ -100,4 +103,67 @@ describe("manifest", () => {
       }),
     ).toThrow("has no conditions");
   });
+
+  test("steam requires profile-specific markup before reporting found", () => {
+    const manifest = loadDefaultManifest();
+    const steam = manifest.sites.find((site) => site.id === "steam");
+
+    expect(steam).toBeDefined();
+    if (!steam) {
+      throw new Error("steam site missing from manifest");
+    }
+
+    expect(
+      evaluateResponse(
+        response({
+          body: "<title>Steam Community :: Error</title>",
+        }),
+        steam.rules,
+        [],
+      ).status,
+    ).toBe("not_found");
+    expect(
+      evaluateResponse(
+        response({
+          body: "<title>Steam Community</title><main>not a profile</main>",
+        }),
+        steam.rules,
+        [],
+      ).status,
+    ).toBe("unknown");
+    expect(
+      evaluateResponse(
+        response({
+          body: '<div class="profile_header_bg"></div>',
+        }),
+        steam.rules,
+        [],
+      ).status,
+    ).toBe("found");
+  });
+
+  test("npm uses a browser-like GET request without reading the body", () => {
+    const manifest = loadDefaultManifest();
+    const npm = manifest.sites.find((site) => site.id === "npm");
+
+    expect(npm).toBeDefined();
+    if (!npm) {
+      throw new Error("npm site missing from manifest");
+    }
+
+    const request = prepareRequest("sindresorhus", npm, manifest);
+
+    expect(request.method).toBe("GET");
+    expect(request.readBody).toBeFalse();
+  });
 });
+
+function response(overrides: Partial<ProbeResponse> = {}): ProbeResponse {
+  return {
+    status: 200,
+    url: "https://example.com",
+    headers: new Headers(),
+    durationMs: 1,
+    ...overrides,
+  };
+}

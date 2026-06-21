@@ -358,16 +358,14 @@ sites:
               text:
                 includes: "Steam Community :: Error"
       - result: found
-        reason: Steam returned a community profile
+        reason: Steam returned a community profile header
         when:
           all:
             - type: status
               in: [200]
-          not:
             - type: html
-              selector: title
-              text:
-                includes: "Steam Community :: Error"
+              selector: .profile_header_bg
+              exists: true
     test:
       found: gabe
       notFoundTemplate: mikurucheck{random}
@@ -376,7 +374,7 @@ sites:
     name: npm
     profileUrl: https://www.npmjs.com/~{username}
     request:
-      method: HEAD
+      method: GET
     rules:
       - result: found
         reason: npm profile page exists
