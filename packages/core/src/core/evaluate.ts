@@ -1,4 +1,4 @@
-import { inspectHtml } from "./html.ts";
+import { inspectHtml, type HtmlInspection } from "./html.ts";
 import { deepEqual, getJsonPath } from "./json.ts";
 import type {
   Condition,
@@ -15,7 +15,7 @@ interface EvaluationContext {
   response: ProbeResponse;
   jsonParsed: boolean;
   json: unknown;
-  html: Map<string, ReturnType<typeof inspectHtml>>;
+  html: Map<string, HtmlInspection>;
 }
 
 export interface EvaluationResult {
@@ -32,11 +32,11 @@ export function responseNeedsBody(rules: Rule[]): boolean {
   );
 }
 
-export function evaluateResponse(
+export async function evaluateResponse(
   response: ProbeResponse,
   rules: Rule[],
   blockedStatuses: number[],
-): EvaluationResult {
+): Promise<EvaluationResult> {
   if (blockedStatuses.includes(response.status)) {
     return { status: "blocked" };
   }
@@ -52,7 +52,7 @@ export function evaluateResponse(
   };
 
   for (const [index, rule] of rules.entries()) {
-    if (matchesGroup(rule.when, context)) {
+    if (await matchesGroup(rule.when, context)) {
       return {
         status: rule.result,
         evidence: {
@@ -67,19 +67,43 @@ export function evaluateResponse(
   return { status: "unknown" };
 }
 
-function matchesGroup(group: ConditionGroup, context: EvaluationContext): boolean {
+async function matchesGroup(group: ConditionGroup, context: EvaluationContext): Promise<boolean> {
   const all = group.all ?? [];
   const any = group.any ?? [];
   const not = group.not ?? [];
 
-  return (
-    all.every((condition) => matchesCondition(condition, context)) &&
-    (any.length === 0 || any.some((condition) => matchesCondition(condition, context))) &&
-    not.every((condition) => !matchesCondition(condition, context))
-  );
+  for (const condition of all) {
+    if (!(await matchesCondition(condition, context))) {
+      return false;
+    }
+  }
+
+  if (any.length > 0) {
+    let matched = false;
+    for (const condition of any) {
+      if (await matchesCondition(condition, context)) {
+        matched = true;
+        break;
+      }
+    }
+    if (!matched) {
+      return false;
+    }
+  }
+
+  for (const condition of not) {
+    if (await matchesCondition(condition, context)) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
-function matchesCondition(condition: Condition, context: EvaluationContext): boolean {
+async function matchesCondition(
+  condition: Condition,
+  context: EvaluationContext,
+): Promise<boolean> {
   switch (condition.type) {
     case "status":
       return (
@@ -127,7 +151,7 @@ function matchesJson(
   return true;
 }
 
-function matchesHtml(condition: HtmlCondition, context: EvaluationContext): boolean {
+async function matchesHtml(condition: HtmlCondition, context: EvaluationContext): Promise<boolean> {
   if (context.response.body === undefined) {
     return false;
   }
@@ -135,11 +159,7 @@ function matchesHtml(condition: HtmlCondition, context: EvaluationContext): bool
   const cacheKey = JSON.stringify(condition);
   let inspection = context.html.get(cacheKey);
   if (!inspection) {
-    try {
-      inspection = inspectHtml(context.response.body, condition);
-    } catch {
-      return false;
-    }
+    inspection = await inspectHtml(context.response.body, condition);
     context.html.set(cacheKey, inspection);
   }
 

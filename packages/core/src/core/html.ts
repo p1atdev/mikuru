@@ -6,7 +6,7 @@ export interface HtmlInspection {
   attributes: Array<string | null>;
 }
 
-export function inspectHtml(html: string, condition: HtmlCondition): HtmlInspection {
+export async function inspectHtml(html: string, condition: HtmlCondition): Promise<HtmlInspection> {
   let count = 0;
   let text = "";
   const attributes: Array<string | null> = [];
@@ -23,6 +23,12 @@ export function inspectHtml(html: string, condition: HtmlCondition): HtmlInspect
     },
   });
 
-  rewriter.transform(html);
+  const transformed = rewriter.transform(
+    new Response(html, {
+      headers: { "content-type": "text/html;charset=utf-8" },
+    }),
+  );
+  await transformed.text();
+
   return { count, text, attributes };
 }

@@ -5,9 +5,10 @@ import {
   type ApiErrorResponse,
   type CheckRequest,
   type CheckResponse,
+  WEB_CHECK_LIMITS,
   summarizeResults,
 } from "../shared";
-import { enabledSites, siteSummaries } from "./sites";
+import { enabledSites, siteSummaries, webDefaultConcurrency, webDefaultTimeoutMs } from "./sites";
 
 export function registerCheckApi(app: Hono, manifest: LoadedManifest): void {
   app.post("/api/check", async (c) => {
@@ -21,9 +22,14 @@ export function registerCheckApi(app: Hono, manifest: LoadedManifest): void {
       return c.json<ApiErrorResponse>({ error: sites.error }, 400);
     }
 
+    const plan = validateCheckPlan(input.value.usernames, sites.value.length);
+    if (!plan.ok) {
+      return c.json<ApiErrorResponse>({ error: plan.error }, 400);
+    }
+
     const results = await checkUsernames(input.value.usernames, sites.value, manifest, {
-      concurrency: input.value.concurrency,
-      timeoutMs: input.value.timeoutMs,
+      concurrency: input.value.concurrency ?? webDefaultConcurrency(manifest),
+      timeoutMs: input.value.timeoutMs ?? webDefaultTimeoutMs(manifest),
     });
 
     return c.json<CheckResponse>({
@@ -60,6 +66,12 @@ function parseCheckRequest(
   if (usernames.length === 0) {
     return { ok: false, error: "At least one username is required." };
   }
+  if (usernames.length > WEB_CHECK_LIMITS.maxUsernames) {
+    return {
+      ok: false,
+      error: `usernames must include at most ${WEB_CHECK_LIMITS.maxUsernames} entries.`,
+    };
+  }
 
   if (!Array.isArray(input.siteIds)) {
     return { ok: false, error: "siteIds must be an array of strings." };
@@ -69,12 +81,20 @@ function parseCheckRequest(
     return { ok: false, error: "At least one site is required." };
   }
 
-  const concurrency = optionalPositiveInteger(input.concurrency, "concurrency");
+  const concurrency = optionalPositiveInteger(
+    input.concurrency,
+    "concurrency",
+    WEB_CHECK_LIMITS.maxConcurrency,
+  );
   if (!concurrency.ok) {
     return concurrency;
   }
 
-  const timeoutMs = optionalPositiveInteger(input.timeoutMs, "timeoutMs");
+  const timeoutMs = optionalPositiveInteger(
+    input.timeoutMs,
+    "timeoutMs",
+    WEB_CHECK_LIMITS.maxTimeoutMs,
+  );
   if (!timeoutMs.ok) {
     return timeoutMs;
   }
@@ -113,6 +133,20 @@ function selectedSites(
   return { ok: true, value: sites };
 }
 
+function validateCheckPlan(
+  usernames: string[],
+  siteCount: number,
+): { ok: true } | { ok: false; error: string } {
+  const totalChecks = usernames.length * siteCount;
+  if (totalChecks > WEB_CHECK_LIMITS.maxChecksPerRequest) {
+    return {
+      ok: false,
+      error: `A single request can include at most ${WEB_CHECK_LIMITS.maxChecksPerRequest} checks.`,
+    };
+  }
+  return { ok: true };
+}
+
 function normalizedStringList(input: unknown[]): string[] {
   return [
     ...new Set(
@@ -127,12 +161,16 @@ function normalizedStringList(input: unknown[]): string[] {
 function optionalPositiveInteger(
   value: unknown,
   name: string,
+  max: number,
 ): { ok: true; value: number | undefined } | { ok: false; error: string } {
   if (value === undefined) {
     return { ok: true, value: undefined };
   }
   if (typeof value !== "number" || !Number.isInteger(value) || value < 1) {
     return { ok: false, error: `${name} must be a positive integer.` };
+  }
+  if (value > max) {
+    return { ok: false, error: `${name} must be at most ${max}.` };
   }
   return { ok: true, value };
 }

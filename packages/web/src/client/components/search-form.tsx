@@ -2,7 +2,7 @@
 
 import { Banner, Button, Checkbox, Input, InputArea, LayerCard, Text } from "@cloudflare/kumo";
 import type { FormEvent } from "react";
-import type { SiteSummary } from "../../shared";
+import type { SiteSummary, WebCheckLimits } from "../../shared";
 import { SitePicker } from "./site-picker";
 
 interface SearchFormProps {
@@ -15,6 +15,7 @@ interface SearchFormProps {
   disabled?: boolean;
   formError?: string;
   includeAll: boolean;
+  limits: WebCheckLimits;
   plannedChecks: number;
   selectedSiteIds: string[];
   sites: SiteSummary[];
@@ -35,6 +36,7 @@ export function SearchForm({
   disabled = false,
   formError,
   includeAll,
+  limits,
   plannedChecks,
   selectedSiteIds,
   sites,
@@ -47,6 +49,8 @@ export function SearchForm({
   onTimeoutMsChange,
   onUsernameTextChange,
 }: SearchFormProps) {
+  const batchCount = Math.max(1, Math.ceil(plannedChecks / limits.maxChecksPerRequest));
+
   return (
     <form className="space-y-4" onSubmit={onSubmit}>
       <LayerCard className="space-y-5 p-5">
@@ -75,6 +79,7 @@ export function SearchForm({
         <div className="flex flex-col gap-3 rounded-lg border border-kumo-hairline bg-kumo-elevated p-3 sm:flex-row sm:items-center sm:justify-between">
           <Text size="sm" variant="secondary">
             {plannedChecks} planned checks
+            {batchCount > 1 ? ` across ${batchCount} requests` : ""}
           </Text>
           <Button
             disabled={disabled || checking}

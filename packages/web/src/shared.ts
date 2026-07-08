@@ -1,5 +1,19 @@
 import type { AccountStatus, CheckResult } from "core/src/types";
 
+export interface WebCheckLimits {
+  maxUsernames: number;
+  maxChecksPerRequest: number;
+  maxConcurrency: number;
+  maxTimeoutMs: number;
+}
+
+export const WEB_CHECK_LIMITS: WebCheckLimits = {
+  maxUsernames: 10,
+  maxChecksPerRequest: 50,
+  maxConcurrency: 6,
+  maxTimeoutMs: 30_000,
+};
+
 export const ACCOUNT_STATUSES = [
   "found",
   "not_found",
@@ -21,6 +35,7 @@ export interface SitesResponse {
     concurrency: number;
     timeoutMs: number;
   };
+  limits: WebCheckLimits;
 }
 
 export interface CheckRequest {

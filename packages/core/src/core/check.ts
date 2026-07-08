@@ -28,7 +28,7 @@ export async function checkUsernameOnSite(
   try {
     prepared = prepareRequest(username, site, manifest, options.timeoutMs);
     const response = await executeRequest(prepared);
-    const evaluation = evaluateResponse(
+    const evaluation = await evaluateResponse(
       response,
       site.rules,
       site.blockedStatuses ?? manifest.defaults.blockedStatuses,

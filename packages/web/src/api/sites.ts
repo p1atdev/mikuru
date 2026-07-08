@@ -1,6 +1,6 @@
 import type { Hono } from "hono";
 import type { LoadedManifest, SiteConfig } from "core/src/types";
-import type { SiteSummary, SitesResponse } from "../shared";
+import { WEB_CHECK_LIMITS, type SiteSummary, type SitesResponse } from "../shared";
 
 export function registerSitesApi(app: Hono, manifest: LoadedManifest): void {
   app.get("/api/sites", (c) => {
@@ -12,9 +12,10 @@ export function createSitesResponse(manifest: LoadedManifest): SitesResponse {
   return {
     sites: siteSummaries(enabledSites(manifest)),
     defaults: {
-      concurrency: manifest.defaults.concurrency,
-      timeoutMs: manifest.defaults.timeoutMs,
+      concurrency: webDefaultConcurrency(manifest),
+      timeoutMs: webDefaultTimeoutMs(manifest),
     },
+    limits: WEB_CHECK_LIMITS,
   };
 }
 
@@ -28,4 +29,12 @@ export function siteSummaries(sites: SiteConfig[]): SiteSummary[] {
     name: site.name,
     tags: site.tags ?? [],
   }));
+}
+
+export function webDefaultConcurrency(manifest: LoadedManifest): number {
+  return Math.min(manifest.defaults.concurrency, WEB_CHECK_LIMITS.maxConcurrency);
+}
+
+export function webDefaultTimeoutMs(manifest: LoadedManifest): number {
+  return Math.min(manifest.defaults.timeoutMs, WEB_CHECK_LIMITS.maxTimeoutMs);
 }

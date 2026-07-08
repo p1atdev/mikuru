@@ -13,7 +13,7 @@ function response(overrides: Partial<ProbeResponse> = {}): ProbeResponse {
 }
 
 describe("response evaluation", () => {
-  test("matches status ranges and preserves rule evidence", () => {
+  test("matches status ranges and preserves rule evidence", async () => {
     const rules: Rule[] = [
       {
         result: "found",
@@ -24,7 +24,7 @@ describe("response evaluation", () => {
       },
     ];
 
-    expect(evaluateResponse(response(), rules, [])).toEqual({
+    expect(await evaluateResponse(response(), rules, [])).toEqual({
       status: "found",
       evidence: {
         rule: 0,
@@ -34,7 +34,7 @@ describe("response evaluation", () => {
     });
   });
 
-  test("supports all, any, and not", () => {
+  test("supports all, any, and not", async () => {
     const rules: Rule[] = [
       {
         result: "found",
@@ -49,10 +49,10 @@ describe("response evaluation", () => {
       },
     ];
 
-    expect(evaluateResponse(response({ body: "profile" }), rules, []).status).toBe("found");
+    expect((await evaluateResponse(response({ body: "profile" }), rules, [])).status).toBe("found");
   });
 
-  test("evaluates JSON paths and deep equality", () => {
+  test("evaluates JSON paths and deep equality", async () => {
     const rules: Rule[] = [
       {
         result: "not_found",
@@ -63,11 +63,11 @@ describe("response evaluation", () => {
     ];
 
     expect(
-      evaluateResponse(response({ body: JSON.stringify({ users: [] }) }), rules, []).status,
+      (await evaluateResponse(response({ body: JSON.stringify({ users: [] }) }), rules, [])).status,
     ).toBe("not_found");
   });
 
-  test("evaluates HTML selectors, text, and attributes", () => {
+  test("evaluates HTML selectors, text, and attributes", async () => {
     const rules: Rule[] = [
       {
         result: "found",
@@ -89,19 +89,24 @@ describe("response evaluation", () => {
     ];
 
     const body = '<main class="profile" data-user="alice">Alice Smith</main>';
-    expect(evaluateResponse(response({ body }), rules, []).status).toBe("found");
+    expect((await evaluateResponse(response({ body }), rules, [])).status).toBe("found");
   });
 
-  test("marks configured statuses and WAF pages as blocked", () => {
-    expect(evaluateResponse(response({ status: 429 }), [], [429]).status).toBe("blocked");
+  test("marks configured statuses and WAF pages as blocked", async () => {
+    expect((await evaluateResponse(response({ status: 429 }), [], [429])).status).toBe("blocked");
     expect(
-      evaluateResponse(response({ body: '<span id="challenge-error-text">blocked</span>' }), [], [])
-        .status,
+      (
+        await evaluateResponse(
+          response({ body: '<span id="challenge-error-text">blocked</span>' }),
+          [],
+          [],
+        )
+      ).status,
     ).toBe("blocked");
   });
 
-  test("returns unknown when no rule matches", () => {
-    expect(evaluateResponse(response({ status: 418 }), [], []).status).toBe("unknown");
+  test("returns unknown when no rule matches", async () => {
+    expect((await evaluateResponse(response({ status: 418 }), [], [])).status).toBe("unknown");
   });
 
   test("detects whether a request needs a body", () => {

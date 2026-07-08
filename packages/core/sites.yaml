@@ -126,24 +126,30 @@ sites:
     username:
       pattern: "^[a-zA-Z0-9._]{1,30}$"
     request:
-      url: https://www.instagram.com/api/v1/users/web_profile_info/?username={username}
       method: GET
       headers:
-        accept: application/json
-        x-ig-app-id: "936619743392459"
+        accept: text/html
+        user-agent: Mozilla/5.0
     rules:
       - result: found
-        reason: Instagram web profile API returned a user
+        reason: Instagram profile page exposes profile metadata
         when:
           all:
             - type: status
               in: [200]
+            - type: html
+              selector: 'meta[property="og:title"]'
+              exists: true
       - result: not_found
-        reason: Instagram web profile API did not find the user
+        reason: Instagram profile page did not expose profile metadata
         when:
           all:
             - type: status
-              in: [404]
+              in: [200, 404]
+          not:
+            - type: html
+              selector: 'meta[property="og:title"]'
+              exists: true
     test:
       found: instagram
       notFoundTemplate: mikurucheck{random}

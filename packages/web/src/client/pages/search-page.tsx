@@ -3,7 +3,12 @@
 import { Banner, Text } from "@cloudflare/kumo";
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
-import type { CheckResponse, SiteSummary, SitesResponse } from "../../shared";
+import {
+  WEB_CHECK_LIMITS,
+  type CheckResponse,
+  type SiteSummary,
+  type SitesResponse,
+} from "../../shared";
 import { ResultsTable } from "../components/results-table";
 import { SearchForm } from "../components/search-form";
 import { SummaryStrip } from "../components/summary-strip";
@@ -15,6 +20,7 @@ type LoadState = "loading" | "ready" | "error";
 export function SearchPage() {
   const [sites, setSites] = useState<SiteSummary[]>([]);
   const [defaults, setDefaults] = useState<SitesResponse["defaults"]>();
+  const [limits, setLimits] = useState<SitesResponse["limits"]>(WEB_CHECK_LIMITS);
   const [selectedSiteIds, setSelectedSiteIds] = useState<string[]>([]);
   const [siteLoadState, setSiteLoadState] = useState<LoadState>("loading");
   const [siteLoadError, setSiteLoadError] = useState<string>();
@@ -37,6 +43,7 @@ export function SearchPage() {
         }
         setSites(response.sites);
         setDefaults(response.defaults);
+        setLimits(response.limits);
         setSelectedSiteIds(response.sites.map((site) => site.id));
         setSiteLoadState("ready");
       })
@@ -66,6 +73,10 @@ export function SearchPage() {
       setFormError("At least one username is required.");
       return;
     }
+    if (usernames.length > limits.maxUsernames) {
+      setFormError(`At most ${limits.maxUsernames} usernames can be checked at once.`);
+      return;
+    }
     if (selectedSiteIds.length === 0) {
       setFormError("At least one site is required.");
       return;
@@ -76,10 +87,18 @@ export function SearchPage() {
       setFormError(parsedConcurrency.error);
       return;
     }
+    if (parsedConcurrency.value !== undefined && parsedConcurrency.value > limits.maxConcurrency) {
+      setFormError(`Concurrency must be at most ${limits.maxConcurrency}.`);
+      return;
+    }
 
     const parsedTimeout = parseOptionalPositiveInteger(timeoutMs, "Timeout ms");
     if (!parsedTimeout.ok) {
       setFormError(parsedTimeout.error);
+      return;
+    }
+    if (parsedTimeout.value !== undefined && parsedTimeout.value > limits.maxTimeoutMs) {
+      setFormError(`Timeout ms must be at most ${limits.maxTimeoutMs}.`);
       return;
     }
 
@@ -122,6 +141,7 @@ export function SearchPage() {
             disabled={disabled}
             formError={formError}
             includeAll={includeAll}
+            limits={limits}
             onConcurrencyChange={setConcurrency}
             onIncludeAllChange={setIncludeAll}
             onSelectedSiteIdsChange={setSelectedSiteIds}

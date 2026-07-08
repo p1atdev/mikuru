@@ -104,7 +104,7 @@ describe("manifest", () => {
     ).toThrow("has no conditions");
   });
 
-  test("steam requires profile-specific markup before reporting found", () => {
+  test("steam requires profile-specific markup before reporting found", async () => {
     const manifest = loadDefaultManifest();
     const steam = manifest.sites.find((site) => site.id === "steam");
 
@@ -114,32 +114,71 @@ describe("manifest", () => {
     }
 
     expect(
-      evaluateResponse(
-        response({
-          body: "<title>Steam Community :: Error</title>",
-        }),
-        steam.rules,
-        [],
+      (
+        await evaluateResponse(
+          response({
+            body: "<title>Steam Community :: Error</title>",
+          }),
+          steam.rules,
+          [],
+        )
       ).status,
     ).toBe("not_found");
     expect(
-      evaluateResponse(
-        response({
-          body: "<title>Steam Community</title><main>not a profile</main>",
-        }),
-        steam.rules,
-        [],
+      (
+        await evaluateResponse(
+          response({
+            body: "<title>Steam Community</title><main>not a profile</main>",
+          }),
+          steam.rules,
+          [],
+        )
       ).status,
     ).toBe("unknown");
     expect(
-      evaluateResponse(
-        response({
-          body: '<div class="profile_header_bg"></div>',
-        }),
-        steam.rules,
-        [],
+      (
+        await evaluateResponse(
+          response({
+            body: '<div class="profile_header_bg"></div>',
+          }),
+          steam.rules,
+          [],
+        )
       ).status,
     ).toBe("found");
+  });
+
+  test("instagram requires Open Graph profile metadata", async () => {
+    const manifest = loadDefaultManifest();
+    const instagram = manifest.sites.find((site) => site.id === "instagram");
+
+    expect(instagram).toBeDefined();
+    if (!instagram) {
+      throw new Error("instagram site missing from manifest");
+    }
+
+    expect(
+      (
+        await evaluateResponse(
+          response({
+            body: '<meta property="og:title" content="Instagram (@instagram) • Instagram photos and videos">',
+          }),
+          instagram.rules,
+          [],
+        )
+      ).status,
+    ).toBe("found");
+    expect(
+      (
+        await evaluateResponse(
+          response({
+            body: "<title>Instagram</title>",
+          }),
+          instagram.rules,
+          [],
+        )
+      ).status,
+    ).toBe("not_found");
   });
 
   test("npm uses a browser-like GET request without reading the body", () => {
