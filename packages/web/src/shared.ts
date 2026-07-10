@@ -55,6 +55,24 @@ export interface CheckResponse {
   totalChecks: number;
 }
 
+export const CHECK_STREAM_CONTENT_TYPE = "application/x-ndjson";
+
+export type CheckStreamEvent =
+  | {
+      type: "result";
+      completedChecks: number;
+      result: CheckResult;
+      totalChecks: number;
+    }
+  | {
+      type: "complete";
+      report: CheckResponse;
+    }
+  | {
+      type: "error";
+      error: string;
+    };
+
 export interface ApiErrorResponse {
   error: string;
 }

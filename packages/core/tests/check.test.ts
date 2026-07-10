@@ -38,7 +38,8 @@ test("checkUsernames reports progress as each check completes", async () => {
 
   const progress: Array<{ completed: number; total: number }> = [];
   const results = await checkUsernames(["alice"], manifest.sites, manifest, {
-    onResult: (_result, completed, total) => {
+    onResult: async (_result, completed, total) => {
+      await Bun.sleep(1);
       progress.push({ completed, total });
     },
   });

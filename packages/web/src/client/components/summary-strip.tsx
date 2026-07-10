@@ -11,7 +11,7 @@ interface SummaryStripProps {
 
 export function SummaryStrip({ report }: SummaryStripProps) {
   const completed = report.results.length;
-  const total = Math.max(report.totalChecks, 1);
+  const distributionTotal = Math.max(completed, 1);
   const segments = ACCOUNT_STATUSES.map((status) => ({
     status,
     count: report.summary[status],
@@ -25,7 +25,7 @@ export function SummaryStrip({ report }: SummaryStripProps) {
       aria-label="Check summary"
       className="rounded-lg border border-kumo-hairline bg-kumo-base p-4"
     >
-      <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <Text as="h2" variant="heading3">
             Summary
@@ -34,19 +34,20 @@ export function SummaryStrip({ report }: SummaryStripProps) {
             Generated at {new Date(report.generatedAt).toLocaleString()}
           </Text>
         </div>
-        <Text variant="mono-secondary">
-          {completed}/{report.totalChecks}
-        </Text>
       </div>
+
+      <dl className="my-4 grid grid-cols-3 divide-x divide-kumo-hairline rounded-lg bg-kumo-elevated py-3 text-center">
+        <SummaryMetric label="Found" value={report.summary.found} />
+        <SummaryMetric label="Usernames" value={report.usernames.length} />
+        <SummaryMetric label="Completed" value={`${completed}/${report.totalChecks}`} />
+      </dl>
 
       <div aria-label={`Result distribution: ${distributionLabel}`} role="img">
         <div className="mb-2 flex items-center justify-between gap-3">
           <Text size="sm" variant="secondary">
             Result distribution
           </Text>
-          <Text variant="mono-secondary">
-            {completed}/{report.totalChecks}
-          </Text>
+          <Text variant="mono-secondary">{completed} completed</Text>
         </div>
         <div className="flex h-3 overflow-hidden rounded-full bg-kumo-elevated">
           {segments.length > 0 ? (
@@ -55,7 +56,7 @@ export function SummaryStrip({ report }: SummaryStripProps) {
                 aria-label={`${statusLabel(segment.status)} ${segment.count}`}
                 className={statusSegmentClass(segment.status)}
                 key={segment.status}
-                style={{ width: `${(segment.count / total) * 100}%` }}
+                style={{ width: `${(segment.count / distributionTotal) * 100}%` }}
                 title={`${statusLabel(segment.status)} ${segment.count}`}
               />
             ))
@@ -71,5 +72,14 @@ export function SummaryStrip({ report }: SummaryStripProps) {
         ))}
       </div>
     </section>
+  );
+}
+
+function SummaryMetric({ label, value }: { label: string; value: number | string }) {
+  return (
+    <div className="min-w-0 px-2">
+      <dt className="text-xs text-kumo-subtle">{label}</dt>
+      <dd className="truncate font-mono text-sm font-medium text-kumo-default">{value}</dd>
+    </div>
   );
 }

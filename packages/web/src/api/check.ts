@@ -1,10 +1,12 @@
 import type { Hono } from "hono";
 import { checkUsernames } from "core/src/core/check";
-import type { LoadedManifest, SiteConfig } from "core/src/types";
+import type { CheckResult, LoadedManifest, SiteConfig } from "core/src/types";
 import {
+  CHECK_STREAM_CONTENT_TYPE,
   type ApiErrorResponse,
   type CheckRequest,
   type CheckResponse,
+  type CheckStreamEvent,
   WEB_CHECK_LIMITS,
   summarizeResults,
 } from "../shared";
@@ -27,21 +29,98 @@ export function registerCheckApi(app: Hono, manifest: LoadedManifest): void {
       return c.json<ApiErrorResponse>({ error: plan.error }, 400);
     }
 
-    const results = await checkUsernames(input.value.usernames, sites.value, manifest, {
+    const options = {
       concurrency: input.value.concurrency ?? webDefaultConcurrency(manifest),
       timeoutMs: input.value.timeoutMs ?? webDefaultTimeoutMs(manifest),
-    });
+    };
 
-    return c.json<CheckResponse>({
-      schemaVersion: 1,
-      generatedAt: new Date().toISOString(),
-      usernames: input.value.usernames,
-      sites: siteSummaries(sites.value),
-      results,
-      summary: summarizeResults(results),
-      totalChecks: input.value.usernames.length * sites.value.length,
-    });
+    if (acceptsCheckStream(c.req.raw)) {
+      return streamCheckResponse(input.value, sites.value, manifest, options);
+    }
+
+    const results = await checkUsernames(input.value.usernames, sites.value, manifest, options);
+
+    return c.json<CheckResponse>(createCheckResponse(input.value, sites.value, results));
   });
+}
+
+function streamCheckResponse(
+  request: CheckRequest,
+  sites: SiteConfig[],
+  manifest: LoadedManifest,
+  options: { concurrency: number; timeoutMs: number },
+): Response {
+  const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>();
+  const writer = writable.getWriter();
+  const encoder = new TextEncoder();
+
+  const writeEvent = (event: CheckStreamEvent) =>
+    writer.write(encoder.encode(`${JSON.stringify(event)}\n`));
+
+  const streamTask = (async () => {
+    try {
+      const results = await checkUsernames(request.usernames, sites, manifest, {
+        ...options,
+        onResult: async (result, completedChecks, totalChecks) => {
+          await writeEvent({
+            type: "result",
+            completedChecks,
+            result,
+            totalChecks,
+          });
+        },
+      });
+
+      await writeEvent({
+        type: "complete",
+        report: createCheckResponse(request, sites, results),
+      });
+      await writer.close();
+    } catch (error) {
+      try {
+        await writeEvent({ type: "error", error: errorMessage(error) });
+        await writer.close();
+      } catch {
+        await writer.abort(error).catch(() => undefined);
+      }
+    }
+  })();
+
+  void streamTask;
+
+  return new Response(readable, {
+    headers: {
+      "cache-control": "no-store",
+      "content-type": `${CHECK_STREAM_CONTENT_TYPE}; charset=utf-8`,
+      "x-content-type-options": "nosniff",
+    },
+  });
+}
+
+function createCheckResponse(
+  request: CheckRequest,
+  sites: SiteConfig[],
+  results: CheckResult[],
+): CheckResponse {
+  return {
+    schemaVersion: 1,
+    generatedAt: new Date().toISOString(),
+    usernames: request.usernames,
+    sites: siteSummaries(sites),
+    results,
+    summary: summarizeResults(results),
+    totalChecks: request.usernames.length * sites.length,
+  };
+}
+
+function acceptsCheckStream(request: Request): boolean {
+  return (request.headers.get("accept") ?? "")
+    .split(",")
+    .some((value) => value.trim().split(";", 1)[0] === CHECK_STREAM_CONTENT_TYPE);
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }
 
 async function readJson(request: Request): Promise<unknown> {

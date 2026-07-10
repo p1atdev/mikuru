@@ -22,6 +22,9 @@ export function SitePicker({
   const visibleSites = useMemo(() => filterSites(sites, filter), [filter, sites]);
   const allSelected = sites.length > 0 && selectedSiteIds.length === sites.length;
   const partiallySelected = selectedSiteIds.length > 0 && selectedSiteIds.length < sites.length;
+  const hasFilter = filter.trim().length > 0;
+  const allVisibleSelected =
+    visibleSites.length > 0 && visibleSites.every((site) => selected.has(site.id));
 
   function setAll(checked: boolean) {
     onSelectedSiteIdsChange(checked ? sites.map((site) => site.id) : []);
@@ -33,6 +36,14 @@ export function SitePicker({
       next.add(siteId);
     } else {
       next.delete(siteId);
+    }
+    onSelectedSiteIdsChange(sites.filter((site) => next.has(site.id)).map((site) => site.id));
+  }
+
+  function selectVisible() {
+    const next = new Set(selected);
+    for (const site of visibleSites) {
+      next.add(site.id);
     }
     onSelectedSiteIdsChange(sites.filter((site) => next.has(site.id)).map((site) => site.id));
   }
@@ -49,16 +60,22 @@ export function SitePicker({
           </Text>
         </div>
         <div className="flex gap-2">
-          <Button disabled={disabled || sites.length === 0} onClick={() => setAll(true)} size="sm">
-            Select all
+          <Button
+            disabled={disabled || visibleSites.length === 0 || allVisibleSelected}
+            onClick={hasFilter ? selectVisible : () => setAll(true)}
+            size="sm"
+            type="button"
+          >
+            {hasFilter ? `Select matching (${visibleSites.length})` : "Select all"}
           </Button>
           <Button
             disabled={disabled || selectedSiteIds.length === 0}
             onClick={() => setAll(false)}
             size="sm"
+            type="button"
             variant="ghost"
           >
-            Clear
+            Clear all
           </Button>
         </div>
       </div>
@@ -72,6 +89,12 @@ export function SitePicker({
           placeholder="Filter sites"
           value={filter}
         />
+
+        {hasFilter ? (
+          <Text size="sm" variant="secondary">
+            {visibleSites.length} matching {visibleSites.length === 1 ? "site" : "sites"}.
+          </Text>
+        ) : null}
 
         <Checkbox
           checked={allSelected}

@@ -2,17 +2,18 @@
 
 import { Banner, Text } from "@cloudflare/kumo";
 import type { FormEvent } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   WEB_CHECK_LIMITS,
   type CheckResponse,
   type SiteSummary,
   type SitesResponse,
 } from "../../shared";
-import { ResultsTable } from "../components/results-table";
+import { CheckProgressCard } from "../components/check-progress";
+import { ResultsTable, type ResultView } from "../components/results-table";
 import { SearchForm } from "../components/search-form";
 import { SummaryStrip } from "../components/summary-strip";
-import { fetchSites, runCheck } from "../lib/api";
+import { fetchSites, runCheck, type CheckProgress } from "../lib/api";
 import { parseOptionalPositiveInteger, parseUsernames } from "../lib/usernames";
 
 type LoadState = "loading" | "ready" | "error";
@@ -27,11 +28,14 @@ export function SearchPage() {
   const [usernameText, setUsernameText] = useState("");
   const [concurrency, setConcurrency] = useState("");
   const [timeoutMs, setTimeoutMs] = useState("");
-  const [includeAll, setIncludeAll] = useState(false);
   const [formError, setFormError] = useState<string>();
   const [checkError, setCheckError] = useState<string>();
+  const [checkCancelled, setCheckCancelled] = useState<string>();
   const [checking, setChecking] = useState(false);
+  const [checkProgress, setCheckProgress] = useState<CheckProgress>();
   const [report, setReport] = useState<CheckResponse>();
+  const [resultView, setResultView] = useState<ResultView>("matches");
+  const abortControllerRef = useRef<AbortController | undefined>(undefined);
 
   useEffect(() => {
     let active = true;
@@ -68,6 +72,7 @@ export function SearchPage() {
     event.preventDefault();
     setFormError(undefined);
     setCheckError(undefined);
+    setCheckCancelled(undefined);
 
     if (usernames.length === 0) {
       setFormError("At least one username is required.");
@@ -102,21 +107,61 @@ export function SearchPage() {
       return;
     }
 
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+    let latestProgress: CheckProgress | undefined;
+
     setChecking(true);
+    setCheckProgress(undefined);
+    setReport(undefined);
     try {
       setReport(
-        await runCheck({
-          usernames,
-          siteIds: selectedSiteIds,
-          concurrency: parsedConcurrency.value,
-          timeoutMs: parsedTimeout.value,
-        }),
+        await runCheck(
+          {
+            usernames,
+            siteIds: selectedSiteIds,
+            concurrency: parsedConcurrency.value,
+            timeoutMs: parsedTimeout.value,
+          },
+          {
+            signal: abortController.signal,
+            onProgress: (progress) => {
+              latestProgress = progress;
+              setCheckProgress(progress);
+              if (progress.report) {
+                setReport(progress.report);
+              }
+            },
+          },
+        ),
       );
     } catch (error) {
-      setCheckError(error instanceof Error ? error.message : String(error));
+      const completed = latestProgress?.completedChecks ?? 0;
+      const total = latestProgress?.totalChecks ?? plannedChecks;
+      if (isAbortError(error)) {
+        setCheckCancelled(
+          completed > 0
+            ? `Stopped after ${completed} of ${total} checks. Completed results remain below.`
+            : "The check was stopped before any results completed.",
+        );
+      } else {
+        const message = error instanceof Error ? error.message : String(error);
+        setCheckError(
+          completed > 0
+            ? `Stopped after ${completed} of ${total} checks. Completed results remain below. ${message}`
+            : message,
+        );
+      }
     } finally {
+      if (abortControllerRef.current === abortController) {
+        abortControllerRef.current = undefined;
+      }
       setChecking(false);
     }
+  }
+
+  function handleCancel() {
+    abortControllerRef.current?.abort();
   }
 
   return (
@@ -133,17 +178,16 @@ export function SearchPage() {
           </div>
         </header>
 
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
           <SearchForm
             checking={checking}
             concurrency={concurrency}
             defaults={defaults}
             disabled={disabled}
             formError={formError}
-            includeAll={includeAll}
             limits={limits}
             onConcurrencyChange={setConcurrency}
-            onIncludeAllChange={setIncludeAll}
+            onCancel={handleCancel}
             onSelectedSiteIdsChange={setSelectedSiteIds}
             onSubmit={handleSubmit}
             onTimeoutMsChange={setTimeoutMs}
@@ -152,10 +196,11 @@ export function SearchPage() {
             selectedSiteIds={selectedSiteIds}
             sites={sites}
             timeoutMs={timeoutMs}
+            usernameCount={usernames.length}
             usernameText={usernameText}
           />
 
-          <section aria-label="Search output" className="space-y-4">
+          <section aria-label="Search output" className="min-w-0 space-y-4">
             {siteLoadState === "loading" ? (
               <Banner description="Fetching enabled sites." title="Loading site manifest" />
             ) : null}
@@ -169,11 +214,19 @@ export function SearchPage() {
             {checkError ? (
               <Banner description={checkError} title="Check failed" variant="error" />
             ) : null}
+            {checkCancelled ? (
+              <Banner description={checkCancelled} title="Check cancelled" />
+            ) : null}
+            {checking && checkProgress ? <CheckProgressCard progress={checkProgress} /> : null}
             {report ? <SummaryStrip report={report} /> : null}
-            <ResultsTable includeAll={includeAll} report={report} />
+            <ResultsTable onViewChange={setResultView} report={report} view={resultView} />
           </section>
         </div>
       </div>
     </main>
   );
+}
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof DOMException && error.name === "AbortError";
 }

@@ -65,7 +65,7 @@ export async function checkUsernames(
   manifest: LoadedManifest,
   options: CheckOptions & {
     concurrency?: number;
-    onResult?: (result: CheckResult, completed: number, total: number) => void;
+    onResult?: (result: CheckResult, completed: number, total: number) => Promise<void> | void;
   } = {},
 ): Promise<CheckResult[]> {
   const jobs = usernames.flatMap((username) => sites.map((site) => ({ username, site })));
@@ -77,7 +77,7 @@ export async function checkUsernames(
     async ({ username, site }) => {
       const result = await checkUsernameOnSite(username, site, manifest, options);
       completed += 1;
-      options.onResult?.(result, completed, jobs.length);
+      await options.onResult?.(result, completed, jobs.length);
       return result;
     },
   );
